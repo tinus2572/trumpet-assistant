@@ -1,74 +1,389 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Note, PlayedNote, evaluatePitch } from "@/lib/trumpet";
+import { useEffect, useRef, useCallback } from "react";
+import {
+  Note as TNote,
+  PlayedNote,
+  evaluatePitch,
+} from "@/lib/trumpet";
+import { Score } from "@/lib/partitions";
 import { useI18n } from "@/lib/i18n";
+import {
+  Renderer,
+  Stave,
+  StaveNote,
+  Voice,
+  VoiceMode,
+  Formatter,
+  Beam,
+  Accidental,
+  Dot,
+  GhostNote,
+} from "vexflow";
 
-// Rendering constants
-const LINE_SP = 10;
-const HALF = LINE_SP / 2;
-const REF_Y = 110; // Y of C4 (middle C)
-const NOTE_SP = 55;
-const LEFT_MARGIN = 45;
-const RIGHT_PAD = 40;
-const R = 4.5; // note radius
-const SVG_H = 175;
+// --- Helpers ---
 
-// Diatonic positions of staff lines (treble clef)
-// E4=2, G4=4, B4=6, D5=8, F5=10
-const STAFF_LINES = [2, 4, 6, 8, 10];
+const NOTE_COLOR = "#a1a1aa"; // zinc-400
+const STAFF_LINE_COLOR = "#3f3f46"; // zinc-700
+const ACTIVE_HALO = "rgba(245,158,11,0.18)"; // amber glow
 
-// Diatonic position: steps from C in the octave
-const BASE_POS: Record<Note, number> = {
-  [Note.C]: 0, [Note.Cs]: 0, [Note.D]: 1, [Note.Ds]: 1, [Note.E]: 2,
-  [Note.F]: 3, [Note.Fs]: 3, [Note.G]: 4, [Note.Gs]: 4, [Note.A]: 5, [Note.As]: 5, [Note.B]: 6,
-};
-
-function posY(nom: Note, octave: number): number {
-  const pos = (octave - 4) * 7 + (BASE_POS[nom] ?? 0);
-  return REF_Y - pos * HALF;
+/** Map our Note enum to a VexFlow key like "C/4" or "C#/4" */
+function toVexKey(note: TNote, octave: number): string {
+  return `${note}/${octave}`;
 }
 
-function diaPos(nom: Note, octave: number): number {
-  return (octave - 4) * 7 + (BASE_POS[nom] ?? 0);
+/** Does this note name contain a sharp? */
+function isSharp(note: TNote): boolean {
+  return note.includes("#");
 }
 
-function isSharp(nom: Note): boolean {
-  return nom.includes("#");
+/** Map beat duration to VexFlow duration string + dot count */
+function beatsToDur(beats: number): { dur: string; dots: number } {
+  if (beats >= 4) return { dur: "w", dots: 0 };
+  if (beats >= 3) return { dur: "h", dots: 1 };
+  if (beats >= 2) return { dur: "h", dots: 0 };
+  if (beats >= 1.5) return { dur: "q", dots: 1 };
+  if (beats >= 1) return { dur: "q", dots: 0 };
+  if (beats >= 0.75) return { dur: "8", dots: 1 };
+  if (beats >= 0.5) return { dur: "8", dots: 0 };
+  return { dur: "16", dots: 0 };
 }
 
-// Ledger lines needed for a given diatonic position
-function ledgerLines(pos: number): number[] {
-  const lines: number[] = [];
-  if (pos <= 0) {
-    for (let p = 0; p >= pos; p -= 2) lines.push(p);
+// --- Measure splitting ---
+
+interface MeasureData {
+  noteIndices: number[]; // indices into the original notes array
+  vexNotes: StaveNote[];
+  beamGroups: StaveNote[][];
+}
+
+/** Split score notes into measures using the time signature */
+function buildScoreMeasures(
+  score: Score,
+  notes: PlayedNote[],
+  noteActiveIndex: number | null,
+  mode: string
+): MeasureData[] {
+  const [beatsPerMeasure] = score.signature;
+  const measures: MeasureData[] = [];
+  let currentBeat = 0;
+  let measureNoteIndices: number[] = [];
+  let measureVexNotes: StaveNote[] = [];
+  let beamGroup: StaveNote[] = [];
+  let beamGroups: StaveNote[][] = [];
+
+  for (let i = 0; i < score.notes.length; i++) {
+    const sn = score.notes[i];
+    const pn = notes[i];
+
+    // Handle rest before note
+    if (sn.rest && sn.rest > 0) {
+      currentBeat += sn.rest;
+    }
+
+    const { dur, dots } = beatsToDur(sn.duration);
+    const key = toVexKey(pn.note.writtenNote, pn.note.writtenOctave);
+    const vn = new StaveNote({ keys: [key], duration: dur, dots, autoStem: true });
+
+    // Accidental
+    if (isSharp(pn.note.writtenNote)) {
+      vn.addModifier(new Accidental("#"));
+    }
+
+    // Dots
+    for (let d = 0; d < dots; d++) {
+      Dot.buildAndAttach([vn]);
+    }
+
+    // Style
+    applyNoteStyle(vn, i, noteActiveIndex, pn, mode);
+
+    measureNoteIndices.push(i);
+    measureVexNotes.push(vn);
+
+    // Collect beam groups (eighth notes or shorter)
+    if (sn.duration <= 0.5) {
+      beamGroup.push(vn);
+    } else {
+      if (beamGroup.length >= 2) beamGroups.push([...beamGroup]);
+      beamGroup = [];
+    }
+
+    currentBeat += sn.duration;
+
+    // End of measure?
+    if (currentBeat >= beatsPerMeasure - 0.001) {
+      if (beamGroup.length >= 2) beamGroups.push([...beamGroup]);
+      beamGroup = [];
+      measures.push({
+        noteIndices: [...measureNoteIndices],
+        vexNotes: [...measureVexNotes],
+        beamGroups: [...beamGroups],
+      });
+      measureNoteIndices = [];
+      measureVexNotes = [];
+      beamGroups = [];
+      currentBeat = currentBeat - beatsPerMeasure;
+    }
   }
-  if (pos >= 12) {
-    for (let p = 12; p <= pos; p += 2) lines.push(p);
+
+  // Remaining notes
+  if (measureVexNotes.length > 0) {
+    if (beamGroup.length >= 2) beamGroups.push([...beamGroup]);
+    measures.push({
+      noteIndices: measureNoteIndices,
+      vexNotes: measureVexNotes,
+      beamGroups,
+    });
   }
-  return lines;
+
+  return measures;
 }
+
+/** Build measures for live/replay mode (all quarter notes, 4 per measure) */
+function buildLiveMeasures(
+  notes: PlayedNote[],
+  noteActiveIndex: number | null,
+  mode: string
+): MeasureData[] {
+  const NOTES_PER_MEASURE = 4;
+  const measures: MeasureData[] = [];
+
+  for (let start = 0; start < notes.length; start += NOTES_PER_MEASURE) {
+    const end = Math.min(start + NOTES_PER_MEASURE, notes.length);
+    const noteIndices: number[] = [];
+    const vexNotes: StaveNote[] = [];
+
+    for (let i = start; i < end; i++) {
+      const pn = notes[i];
+      const key = toVexKey(pn.note.writtenNote, pn.note.writtenOctave);
+      const vn = new StaveNote({ keys: [key], duration: "q", autoStem: true });
+
+      if (isSharp(pn.note.writtenNote)) {
+        vn.addModifier(new Accidental("#"));
+      }
+
+      applyNoteStyle(vn, i, noteActiveIndex, pn, mode);
+
+      noteIndices.push(i);
+      vexNotes.push(vn);
+    }
+
+    measures.push({ noteIndices, vexNotes, beamGroups: [] });
+  }
+
+  return measures;
+}
+
+/** Apply color styling to a note based on active state and pitch accuracy */
+function applyNoteStyle(
+  vn: StaveNote,
+  index: number,
+  activeIndex: number | null,
+  pn: PlayedNote,
+  mode: string
+) {
+  const isActive = index === activeIndex;
+  const pitch = evaluatePitch(pn.note.centsOffset);
+
+  if (isActive) {
+    const color = pitch.color;
+    vn.setStyle({ fillStyle: color, strokeStyle: color });
+    vn.setStemStyle({ fillStyle: color, strokeStyle: color });
+    vn.setFlagStyle({ fillStyle: color, strokeStyle: color });
+  } else {
+    const opacity = activeIndex !== null && mode === "replay" ? 0.35 : 0.7;
+    const color = `rgba(161,161,170,${opacity})`; // zinc-400 with opacity
+    vn.setStyle({ fillStyle: color, strokeStyle: color });
+    vn.setStemStyle({ fillStyle: color, strokeStyle: color });
+    vn.setFlagStyle({ fillStyle: color, strokeStyle: color });
+  }
+}
+
+// --- Constants ---
+const STAVE_HEIGHT = 140;
+const STAVE_Y = 20;
+const FIRST_MEASURE_WIDTH = 220; // wider for clef + time sig
+const MEASURE_WIDTH = 180;
+
+// --- Component ---
 
 interface StaffProps {
   notes: PlayedNote[];
   noteActiveIndex: number | null;
   mode: "live" | "replay";
+  score?: Score;
 }
 
-export default function Staff({ notes, noteActiveIndex, mode }: StaffProps) {
-  const { t, dn } = useI18n();
+export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProps) {
+  const { t } = useI18n();
+  const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const svgW = Math.max(400, LEFT_MARGIN + notes.length * NOTE_SP + RIGHT_PAD);
+  const render = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Clear previous render
+    container.innerHTML = "";
+
+    if (notes.length === 0) {
+      // Empty state: render a single empty stave with clef
+      const svgW = 400;
+      const renderer = new Renderer(container, Renderer.Backends.SVG);
+      renderer.resize(svgW, STAVE_HEIGHT);
+      const ctx = renderer.getContext();
+
+      const stave = new Stave(0, STAVE_Y, svgW - 10);
+      stave.addClef("treble");
+      stave.setStyle({ fillStyle: STAFF_LINE_COLOR, strokeStyle: STAFF_LINE_COLOR });
+      stave.setContext(ctx).draw();
+
+      // Empty state text
+      const svg = container.querySelector("svg");
+      if (svg) {
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", String(svgW / 2));
+        text.setAttribute("y", String(STAVE_Y + 45));
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("font-size", "12");
+        text.setAttribute("fill", "#52525b");
+        text.textContent = mode === "live" ? t("staff.emptyLive") : t("staff.emptyReplay");
+        svg.appendChild(text);
+      }
+      return;
+    }
+
+    // Build measures
+    const measures = score
+      ? buildScoreMeasures(score, notes, noteActiveIndex, mode)
+      : buildLiveMeasures(notes, noteActiveIndex, mode);
+
+    // Calculate total width
+    const totalWidth = measures.reduce(
+      (acc, _, i) => acc + (i === 0 ? FIRST_MEASURE_WIDTH : MEASURE_WIDTH),
+      40 // right padding
+    );
+
+    const renderer = new Renderer(container, Renderer.Backends.SVG);
+    renderer.resize(totalWidth, STAVE_HEIGHT);
+    const ctx = renderer.getContext();
+
+    let x = 0;
+    let activeMeasureX = 0;
+    let activeNoteLocalIdx = 0;
+
+    measures.forEach((measure, mi) => {
+      const isFirst = mi === 0;
+      const isLast = mi === measures.length - 1;
+      const w = isFirst ? FIRST_MEASURE_WIDTH : MEASURE_WIDTH;
+
+      const stave = new Stave(x, STAVE_Y, w);
+      stave.setStyle({ fillStyle: STAFF_LINE_COLOR, strokeStyle: STAFF_LINE_COLOR });
+
+      if (isFirst) {
+        stave.addClef("treble");
+        if (score) {
+          stave.setTimeSignature(`${score.signature[0]}/${score.signature[1]}`);
+        }
+      }
+
+      stave.setContext(ctx).draw();
+
+      // Voice
+      const voice = new Voice(
+        score
+          ? { numBeats: score.signature[0], beatValue: score.signature[1] }
+          : { numBeats: 4, beatValue: 4 }
+      );
+      voice.setMode(VoiceMode.SOFT);
+      voice.addTickables(measure.vexNotes);
+
+      new Formatter().joinVoices([voice]).format([voice], w - (isFirst ? 80 : 30));
+
+      // Beams
+      const beams = measure.beamGroups.map((group) => new Beam(group));
+
+      voice.draw(ctx, stave);
+      beams.forEach((b) => b.setContext(ctx).draw());
+
+      // Track active note position for scrolling
+      if (noteActiveIndex !== null) {
+        const localIdx = measure.noteIndices.indexOf(noteActiveIndex);
+        if (localIdx !== -1) {
+          activeMeasureX = x;
+          activeNoteLocalIdx = localIdx;
+        }
+      }
+
+      x += w;
+    });
+
+    // Draw active note halo as SVG overlay
+    if (noteActiveIndex !== null) {
+      const svg = container.querySelector("svg");
+      if (svg) {
+        // Find the active note's bounding box by looking at the rendered note heads
+        const noteElements = svg.querySelectorAll(".vf-stavenote");
+        let globalIdx = 0;
+        for (const measure of measures) {
+          for (let li = 0; li < measure.vexNotes.length; li++) {
+            if (measure.noteIndices[li] === noteActiveIndex && noteElements[globalIdx]) {
+              const bbox = noteElements[globalIdx].getBoundingClientRect();
+              const svgRect = svg.getBoundingClientRect();
+              const cx = bbox.x - svgRect.x + bbox.width / 2;
+              const cy = bbox.y - svgRect.y + bbox.height / 2;
+              const halo = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+              halo.setAttribute("cx", String(cx));
+              halo.setAttribute("cy", String(cy));
+              halo.setAttribute("rx", "14");
+              halo.setAttribute("ry", "12");
+              halo.setAttribute("fill", ACTIVE_HALO);
+              halo.setAttribute("stroke", "none");
+              // Insert behind notes
+              svg.insertBefore(halo, svg.firstChild);
+            }
+            globalIdx++;
+          }
+        }
+      }
+    }
+  }, [notes, noteActiveIndex, mode, score, t]);
+
+  useEffect(() => {
+    render();
+  }, [render]);
 
   // Auto-scroll to active note
   useEffect(() => {
     if (noteActiveIndex === null || !scrollRef.current) return;
-    const x = LEFT_MARGIN + noteActiveIndex * NOTE_SP;
+
+    // Estimate the x position of the active note
+    let noteCount = 0;
+    let targetX = 0;
+    const measures = score
+      ? buildScoreMeasures(score, notes, noteActiveIndex, mode)
+      : buildLiveMeasures(notes, noteActiveIndex, mode);
+
+    let x = 0;
+    for (const measure of measures) {
+      const w = x === 0 ? FIRST_MEASURE_WIDTH : MEASURE_WIDTH;
+      const localIdx = measure.noteIndices.indexOf(noteActiveIndex);
+      if (localIdx !== -1) {
+        const noteSpacing = (w - (x === 0 ? 80 : 30)) / (measure.vexNotes.length || 1);
+        targetX = x + (x === 0 ? 80 : 30) + localIdx * noteSpacing;
+        break;
+      }
+      x += w;
+    }
+
     const container = scrollRef.current;
-    const scrollTarget = x - container.clientWidth / 2;
-    container.scrollTo({ left: scrollTarget, behavior: mode === "live" ? "smooth" : "auto" });
-  }, [noteActiveIndex, mode]);
+    const scrollTarget = targetX - container.clientWidth / 2;
+    container.scrollTo({
+      left: scrollTarget,
+      behavior: mode === "live" ? "smooth" : "auto",
+    });
+  }, [noteActiveIndex, mode, notes, score]);
 
   return (
     <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
@@ -83,138 +398,7 @@ export default function Staff({ notes, noteActiveIndex, mode }: StaffProps) {
         )}
       </div>
       <div ref={scrollRef} className="overflow-x-auto px-2 pb-3">
-        <svg width={svgW} height={SVG_H} className="block">
-          {/* Staff: 5 lines */}
-          {STAFF_LINES.map((pos) => (
-            <line
-              key={pos}
-              x1={10}
-              y1={REF_Y - pos * HALF}
-              x2={svgW - 10}
-              y2={REF_Y - pos * HALF}
-              stroke="#3f3f46"
-              strokeWidth={1}
-            />
-          ))}
-
-          {/* Treble clef (simplified) */}
-          <text
-            x={14}
-            y={REF_Y - 4 * HALF + 8}
-            fontSize={38}
-            fill="#71717a"
-            fontFamily="serif"
-          >
-            {"\uD834\uDD1E"}
-          </text>
-
-          {/* Notes */}
-          {notes.map((n, i) => {
-            const x = LEFT_MARGIN + i * NOTE_SP;
-            const noteName = n.note.writtenNote;
-            const octave = n.note.writtenOctave;
-            const y = posY(noteName, octave);
-            const pos = diaPos(noteName, octave);
-            const sharp = isSharp(noteName);
-            const active = i === noteActiveIndex;
-            const j = evaluatePitch(n.note.centsOffset);
-            const color = active ? j.color : "#a1a1aa";
-            const opacity = active ? 1 : noteActiveIndex !== null && mode === "replay" ? 0.4 : 0.7;
-
-            return (
-              <g key={i} opacity={opacity}>
-                {/* Ledger lines */}
-                {ledgerLines(pos).map((lp) => (
-                  <line
-                    key={lp}
-                    x1={x - 10}
-                    y1={REF_Y - lp * HALF}
-                    x2={x + 10}
-                    y2={REF_Y - lp * HALF}
-                    stroke={active ? color : "#52525b"}
-                    strokeWidth={1}
-                  />
-                ))}
-
-                {/* Note head (oval) */}
-                <ellipse
-                  cx={x}
-                  cy={y}
-                  rx={active ? R + 1.5 : R}
-                  ry={active ? R : R - 0.5}
-                  fill={color}
-                  transform={`rotate(-15, ${x}, ${y})`}
-                />
-
-                {/* Stem */}
-                {pos < 6 ? (
-                  <line x1={x + R} y1={y} x2={x + R} y2={y - 30} stroke={color} strokeWidth={1.2} />
-                ) : (
-                  <line x1={x - R} y1={y} x2={x - R} y2={y + 30} stroke={color} strokeWidth={1.2} />
-                )}
-
-                {/* Sharp sign */}
-                {sharp && (
-                  <text
-                    x={x - R - 10}
-                    y={y + 4}
-                    fontSize={12}
-                    fill={color}
-                    fontFamily="serif"
-                  >
-                    {"\u266F"}
-                  </text>
-                )}
-
-                {/* Note name below staff if active */}
-                {active && (
-                  <>
-                    <text
-                      x={x}
-                      y={SVG_H - 8}
-                      textAnchor="middle"
-                      fontSize={11}
-                      fontWeight="bold"
-                      fill={color}
-                    >
-                      {dn(noteName)}{octave}
-                    </text>
-                    {/* Halo */}
-                    <ellipse
-                      cx={x}
-                      cy={y}
-                      rx={R + 6}
-                      ry={R + 4}
-                      fill="none"
-                      stroke={color}
-                      strokeWidth={1.5}
-                      opacity={0.3}
-                      transform={`rotate(-15, ${x}, ${y})`}
-                    />
-                  </>
-                )}
-
-                {/* Pitch quality dot */}
-                {!active && (
-                  <circle cx={x} cy={SVG_H - 12} r={2} fill={j.color} opacity={0.6} />
-                )}
-              </g>
-            );
-          })}
-
-          {/* Empty state */}
-          {notes.length === 0 && (
-            <text
-              x={svgW / 2}
-              y={REF_Y - 3 * HALF}
-              textAnchor="middle"
-              fontSize={12}
-              fill="#52525b"
-            >
-              {mode === "live" ? t("staff.emptyLive") : t("staff.emptyReplay")}
-            </text>
-          )}
-        </svg>
+        <div ref={containerRef} />
       </div>
     </div>
   );

@@ -203,6 +203,7 @@ export default function ScorePlayer({
             notes={notesStaff}
             noteActiveIndex={noteActiveIdx}
             mode={playing ? "replay" : "live"}
+            score={activeScore}
           />
 
           {/* Playback controls */}

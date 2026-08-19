@@ -52,7 +52,9 @@ export default function TrumpetAnalyzer() {
   const [playedNotes, setPlayedNotes] = useState<PlayedNote[]>([]);
   const [history, setHistory] = useState<Recording[]>(() => {
     if (typeof window === "undefined") return [];
-    const brut = loadHistory();
+    const brut = loadHistory().map((e) =>
+      e.summary ? e : { ...e, summary: computeSummary(e.notes ?? []) }
+    );
     const vus = new Set<string>();
     const dedup = brut.filter((e) => {
       if (vus.has(e.id)) return false;

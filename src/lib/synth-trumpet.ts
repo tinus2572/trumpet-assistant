@@ -1,26 +1,57 @@
-// Basic trumpet synthesizer using Web Audio API
-// Uses multiple oscillators + envelope to simulate a brassy sound
+// Trumpet synthesizer using SoundFont samples (MusyngKite)
+// Falls back to basic oscillators while samples are loading
 
 import { Score, noteToFrequency, beatsToSeconds } from "./partitions";
+import { Note, NOTE_TO_SEMITONE } from "./trumpet";
 
 export interface SynthOptions {
   volume?: number; // 0-1, default 0.5
 }
 
+/** Convert a written Bb trumpet note to concert MIDI number */
+function noteToMidiConcert(note: Note, octave: number): number {
+  const semitone = NOTE_TO_SEMITONE[note];
+  if (semitone === undefined) return 0;
+  const midiWritten = (octave + 1) * 12 + semitone;
+  return midiWritten - 2; // Bb transposition
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SoundfontInstrument = any;
+
+let cachedInstrument: SoundfontInstrument | null = null;
+let loadingPromise: Promise<SoundfontInstrument> | null = null;
+
+async function loadInstrument(ac: AudioContext): Promise<SoundfontInstrument> {
+  if (cachedInstrument) return cachedInstrument;
+  if (loadingPromise) return loadingPromise;
+
+  loadingPromise = import("soundfont-player").then((Soundfont) =>
+    Soundfont.instrument(ac, "/soundfonts/trumpet-mp3.js" as never)
+  );
+
+  cachedInstrument = await loadingPromise;
+  loadingPromise = null;
+  return cachedInstrument;
+}
+
 export class TrumpetSynth {
   private ctx: AudioContext;
   private gainMaster: GainNode;
-  private scheduledNodes: { stop: () => void }[] = [];
   private _playing = false;
-  private startTime = 0;
-  private totalDuration = 0;
   private onNoteChange?: (index: number) => void;
   private noteTimers: ReturnType<typeof setTimeout>[] = [];
+  private scheduledNodes: { stop: () => void }[] = [];
+  private instrument: SoundfontInstrument | null = null;
 
   constructor(ctx?: AudioContext) {
     this.ctx = ctx ?? new AudioContext();
     this.gainMaster = this.ctx.createGain();
     this.gainMaster.connect(this.ctx.destination);
+    // Start loading samples eagerly
+    loadInstrument(this.ctx).then((inst) => {
+      this.instrument = inst;
+    });
   }
 
   get playing() {
@@ -42,20 +73,40 @@ export class TrumpetSynth {
     const volume = options?.volume ?? 0.5;
     this.gainMaster.gain.setValueAtTime(volume, this.ctx.currentTime);
     this._playing = true;
-    this.startTime = this.ctx.currentTime;
+
+    // Try to load instrument, fall back to oscillators if not ready
+    if (!this.instrument) {
+      try {
+        this.instrument = await loadInstrument(this.ctx);
+      } catch {
+        // SoundFont failed to load — fall back to oscillators
+      }
+    }
 
     let currentTime = this.ctx.currentTime;
 
     score.notes.forEach((noteP, index) => {
       const restDuration = beatsToSeconds(noteP.rest ?? 0, score.tempo);
       const noteDuration = beatsToSeconds(noteP.duration, score.tempo);
-      const freq = noteToFrequency(noteP.note, noteP.octave);
 
       currentTime += restDuration;
       const start = currentTime;
 
-      if (freq > 0) {
-        this.scheduleNote(freq, start, noteDuration);
+      if (this.instrument) {
+        const midi = noteToMidiConcert(noteP.note, noteP.octave);
+        if (midi > 0) {
+          const node = this.instrument.play(String(midi), start, {
+            duration: noteDuration * 0.95,
+            gain: volume * 2.4,
+          });
+          if (node) this.scheduledNodes.push(node);
+        }
+      } else {
+        // Fallback: raw oscillators
+        const freq = noteToFrequency(noteP.note, noteP.octave);
+        if (freq > 0) {
+          this.scheduleOscillatorNote(freq, start, noteDuration);
+        }
       }
 
       // Notify note change callback
@@ -70,29 +121,20 @@ export class TrumpetSynth {
       currentTime = start + noteDuration;
     });
 
-    this.totalDuration = currentTime - this.startTime;
+    const totalDuration = currentTime - this.ctx.currentTime;
 
     // Auto-stop when playback ends
     const timer = setTimeout(() => {
       this._playing = false;
-    }, this.totalDuration * 1000 + 100);
+    }, totalDuration * 1000 + 100);
     this.noteTimers.push(timer);
   }
 
-  private scheduleNote(freq: number, start: number, duration: number) {
-    // Brassy sound: fundamental + harmonics
-    const harmonics = [
-      { ratio: 1, gain: 1.0 },
-      { ratio: 2, gain: 0.6 },
-      { ratio: 3, gain: 0.3 },
-      { ratio: 4, gain: 0.15 },
-      { ratio: 5, gain: 0.08 },
-    ];
-
+  /** Fallback oscillator-based note (used while SoundFont loads) */
+  private scheduleOscillatorNote(freq: number, start: number, duration: number) {
     const noteGain = this.ctx.createGain();
     noteGain.connect(this.gainMaster);
 
-    // ADSR envelope
     const attack = Math.min(0.04, duration * 0.1);
     const decay = Math.min(0.08, duration * 0.15);
     const sustainLevel = 0.7;
@@ -104,6 +146,12 @@ export class TrumpetSynth {
     noteGain.gain.linearRampToValueAtTime(sustainLevel, start + attack + decay);
     noteGain.gain.setValueAtTime(sustainLevel, start + attack + decay + sustainTime);
     noteGain.gain.linearRampToValueAtTime(0, start + duration);
+
+    const harmonics = [
+      { ratio: 1, gain: 1.0 },
+      { ratio: 2, gain: 0.6 },
+      { ratio: 3, gain: 0.3 },
+    ];
 
     for (const h of harmonics) {
       const osc = this.ctx.createOscillator();
