@@ -25,6 +25,7 @@ import Staff from "./Staff";
 import History from "./History";
 import ScorePlayer from "./PartitionPlayer";
 import LangSwitch from "./LangSwitch";
+import Metronome from "./Metronome";
 
 const STORAGE_KEY = "trumpet-assistant-history";
 
@@ -568,6 +569,7 @@ export default function TrumpetAnalyzer() {
           />
         </div>
       </div>
+      <Metronome />
     </div>
   );
 }

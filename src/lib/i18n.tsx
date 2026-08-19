@@ -98,6 +98,10 @@ const translations = {
   // Notation switch
   "notation.letter": { fr: "Lettres (C, D, E)", en: "Letters (C, D, E)" },
   "notation.solfege": { fr: "Solf\u00E8ge (Do, R\u00E9, Mi)", en: "Solf\u00E8ge (Do, R\u00E9, Mi)" },
+
+  // Metronome
+  "metronome.start": { fr: "M\u00E9tronome", en: "Metronome" },
+  "metronome.stop": { fr: "Stop", en: "Stop" },
 } as const;
 
 type TranslationKey = keyof typeof translations;

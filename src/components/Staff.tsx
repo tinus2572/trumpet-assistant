@@ -172,6 +172,7 @@ function buildLiveMeasures(
 
     for (let i = start; i < end; i++) {
       const pn = notes[i];
+      if (!pn.note.writtenNote) continue; // skip malformed notes
       const key = toVexKey(pn.note.writtenNote, pn.note.writtenOctave);
       const vn = new StaveNote({ keys: [key], duration: "q", autoStem: true });
 
