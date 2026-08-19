@@ -17,6 +17,7 @@ import {
   Formatter,
   Beam,
   Accidental,
+  Annotation,
   Dot,
   GhostNote,
 } from "vexflow";
@@ -57,12 +58,25 @@ interface MeasureData {
   beamGroups: StaveNote[][];
 }
 
+type DisplayNoteFn = (note: TNote) => string;
+
+/** Add note name annotation below the note */
+function addNoteLabel(vn: StaveNote, pn: PlayedNote, dn: DisplayNoteFn) {
+  const label = `${dn(pn.note.writtenNote)}${pn.note.writtenOctave}`;
+  const annotation = new Annotation(label)
+    .setVerticalJustification(Annotation.VerticalJustify.BOTTOM)
+    .setJustification(Annotation.HorizontalJustify.CENTER);
+  annotation.setStyle({ fillStyle: "#71717a" }); // zinc-500
+  vn.addModifier(annotation);
+}
+
 /** Split score notes into measures using the time signature */
 function buildScoreMeasures(
   score: Score,
   notes: PlayedNote[],
   noteActiveIndex: number | null,
-  mode: string
+  mode: string,
+  dn: DisplayNoteFn
 ): MeasureData[] {
   const [beatsPerMeasure] = score.signature;
   const measures: MeasureData[] = [];
@@ -95,8 +109,9 @@ function buildScoreMeasures(
       Dot.buildAndAttach([vn]);
     }
 
-    // Style
+    // Style + label
     applyNoteStyle(vn, i, noteActiveIndex, pn, mode);
+    addNoteLabel(vn, pn, dn);
 
     measureNoteIndices.push(i);
     measureVexNotes.push(vn);
@@ -144,7 +159,8 @@ function buildScoreMeasures(
 function buildLiveMeasures(
   notes: PlayedNote[],
   noteActiveIndex: number | null,
-  mode: string
+  mode: string,
+  dn: DisplayNoteFn
 ): MeasureData[] {
   const NOTES_PER_MEASURE = 4;
   const measures: MeasureData[] = [];
@@ -164,6 +180,7 @@ function buildLiveMeasures(
       }
 
       applyNoteStyle(vn, i, noteActiveIndex, pn, mode);
+      addNoteLabel(vn, pn, dn);
 
       noteIndices.push(i);
       vexNotes.push(vn);
@@ -201,7 +218,7 @@ function applyNoteStyle(
 }
 
 // --- Constants ---
-const STAVE_HEIGHT = 140;
+const STAVE_HEIGHT = 180;
 const STAVE_Y = 20;
 const FIRST_MEASURE_WIDTH = 220; // wider for clef + time sig
 const MEASURE_WIDTH = 180;
@@ -216,7 +233,7 @@ interface StaffProps {
 }
 
 export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProps) {
-  const { t } = useI18n();
+  const { t, dn } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -256,8 +273,8 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
 
     // Build measures
     const measures = score
-      ? buildScoreMeasures(score, notes, noteActiveIndex, mode)
-      : buildLiveMeasures(notes, noteActiveIndex, mode);
+      ? buildScoreMeasures(score, notes, noteActiveIndex, mode, dn)
+      : buildLiveMeasures(notes, noteActiveIndex, mode, dn);
 
     // Calculate total width
     const totalWidth = measures.reduce(
@@ -348,7 +365,7 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
         }
       }
     }
-  }, [notes, noteActiveIndex, mode, score, t]);
+  }, [notes, noteActiveIndex, mode, score, t, dn]);
 
   useEffect(() => {
     render();
@@ -358,31 +375,19 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
   useEffect(() => {
     if (noteActiveIndex === null || !scrollRef.current) return;
 
-    // Estimate the x position of the active note
-    let noteCount = 0;
-    let targetX = 0;
-    const measures = score
-      ? buildScoreMeasures(score, notes, noteActiveIndex, mode)
-      : buildLiveMeasures(notes, noteActiveIndex, mode);
-
-    let x = 0;
-    for (const measure of measures) {
-      const w = x === 0 ? FIRST_MEASURE_WIDTH : MEASURE_WIDTH;
-      const localIdx = measure.noteIndices.indexOf(noteActiveIndex);
-      if (localIdx !== -1) {
-        const noteSpacing = (w - (x === 0 ? 80 : 30)) / (measure.vexNotes.length || 1);
-        targetX = x + (x === 0 ? 80 : 30) + localIdx * noteSpacing;
-        break;
-      }
-      x += w;
-    }
-
+    // Find the rendered active note element and scroll to it
     const container = scrollRef.current;
-    const scrollTarget = targetX - container.clientWidth / 2;
-    container.scrollTo({
-      left: scrollTarget,
-      behavior: mode === "live" ? "smooth" : "auto",
-    });
+    const noteEls = container.querySelectorAll(".vf-stavenote");
+    if (noteEls[noteActiveIndex]) {
+      const el = noteEls[noteActiveIndex] as HTMLElement;
+      const elRect = el.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const scrollTarget = container.scrollLeft + (elRect.left - containerRect.left) - container.clientWidth / 2 + elRect.width / 2;
+      container.scrollTo({
+        left: scrollTarget,
+        behavior: mode === "live" ? "smooth" : "auto",
+      });
+    }
   }, [noteActiveIndex, mode, notes, score]);
 
   return (
