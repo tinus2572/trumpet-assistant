@@ -51,7 +51,7 @@ export function noteToFrequency(note: Note, octave: number): number {
 }
 
 // Shorthand aliases for concise score definitions
-const { C, D, E, F, G, A, B } = Note;
+const { C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B } = Note;
 
 // --- Built-in scores ---
 
@@ -80,8 +80,8 @@ export const SCORES: Score[] = [
     ],
   },
   {
-    id: "au-clair-de-la-lune",
-    title: "Au Clair de la Lune",
+    id: "au-clair-de-la-lune-do",
+    title: "Au Clair de la Lune (Do)",
     composer: "Jean-Baptiste Lully",
     tempo: 100,
     signature: [4, 4],
@@ -119,6 +119,48 @@ export const SCORES: Score[] = [
       { note: D, octave: 4, duration: 1 },
       { note: D, octave: 4, duration: 1 },
       { note: C, octave: 4, duration: 4 },
+    ],
+  },
+  {
+    id: "au-clair-de-la-lune-sol",
+    title: "Au Clair de la Lune (Sol)",
+    composer: "Jean-Baptiste Lully",
+    tempo: 100,
+    signature: [4, 4],
+    notes: [
+      { note: G, octave: 3, duration: 1 },
+      { note: G, octave: 3, duration: 1 },
+      { note: G, octave: 3, duration: 1 },
+      { note: A, octave: 3, duration: 1 },
+      { note: B, octave: 3, duration: 2 },
+      { note: A, octave: 3, duration: 2 },
+      { note: G, octave: 3, duration: 1 },
+      { note: B, octave: 3, duration: 1 },
+      { note: A, octave: 3, duration: 1 },
+      { note: A, octave: 3, duration: 1 },
+      { note: G, octave: 3, duration: 4 },
+      { note: A, octave: 3, duration: 1 },
+      { note: A, octave: 3, duration: 1 },
+      { note: A, octave: 3, duration: 1 },
+      { note: A, octave: 3, duration: 1 },
+      { note: E, octave: 3, duration: 2 },
+      { note: E, octave: 3, duration: 2 },
+      { note: A, octave: 3, duration: 1 },
+      { note: G, octave: 3, duration: 1 },
+      { note: Fs, octave: 3, duration: 1 },
+      { note: E, octave: 3, duration: 1 },
+      { note: D, octave: 3, duration: 4 },
+      { note: G, octave: 3, duration: 1 },
+      { note: G, octave: 3, duration: 1 },
+      { note: G, octave: 3, duration: 1 },
+      { note: A, octave: 3, duration: 1 },
+      { note: B, octave: 3, duration: 2 },
+      { note: A, octave: 3, duration: 2 },
+      { note: G, octave: 3, duration: 1 },
+      { note: B, octave: 3, duration: 1 },
+      { note: A, octave: 3, duration: 1 },
+      { note: A, octave: 3, duration: 1 },
+      { note: G, octave: 3, duration: 4 },
     ],
   },
   {
@@ -239,6 +281,118 @@ export const SCORES: Score[] = [
       { note: C, octave: 4, duration: 1 },
       { note: D, octave: 4, duration: 1 },
       { note: C, octave: 4, duration: 2 },
+    ],
+  },
+  {
+    id: "fly-me-to-the-moon",
+    title: "Fly Me to the Moon",
+    composer: "Bart Howard",
+    tempo: 100,
+    signature: [4, 4],
+    notes: [
+      // "Fly me to the"
+      { note: C, octave: 5, duration: 1 },
+      { note: B, octave: 4, duration: 1 },
+      { note: A, octave: 4, duration: 1.5 },
+      { note: G, octave: 4, duration: 0.5 },
+      // "moon, let me play"
+      { note: F, octave: 4, duration: 1.5 },
+      { note: G, octave: 4, duration: 0.5 },
+      { note: A, octave: 4, duration: 1 },
+      { note: C, octave: 5, duration: 1 },
+      // "among the"
+      { note: B, octave: 4, duration: 1.5 },
+      { note: A, octave: 4, duration: 0.5 },
+      { note: G, octave: 4, duration: 1 },
+      { note: F, octave: 4, duration: 1 },
+      // "stars"
+      { note: E, octave: 4, duration: 4 },
+      // "Let me see what"
+      { note: A, octave: 4, duration: 1 },
+      { note: G, octave: 4, duration: 1 },
+      { note: F, octave: 4, duration: 1.5 },
+      { note: E, octave: 4, duration: 0.5 },
+      // "spring is like on"
+      { note: D, octave: 4, duration: 1.5 },
+      { note: E, octave: 4, duration: 0.5 },
+      { note: F, octave: 4, duration: 1 },
+      { note: A, octave: 4, duration: 1 },
+      // "Jupiter and"
+      { note: Gs, octave: 4, duration: 1.5 },
+      { note: F, octave: 4, duration: 0.5 },
+      { note: E, octave: 4, duration: 1 },
+      { note: D, octave: 4, duration: 1 },
+      // "Mars"
+      { note: C, octave: 4, duration: 4 },
+      // "In other words"
+      { note: D, octave: 4, duration: 2 },
+      { note: E, octave: 4, duration: 1 },
+      { note: F, octave: 4, duration: 1 },
+      // "hold my hand"
+      { note: A, octave: 4, duration: 2 },
+      { note: G, octave: 4, duration: 2 },
+      // (hold)
+      { note: E, octave: 4, duration: 4 },
+      // "In other words"
+      { note: D, octave: 4, duration: 2 },
+      { note: E, octave: 4, duration: 1 },
+      { note: F, octave: 4, duration: 1 },
+      // "darling, kiss me"
+      { note: Gs, octave: 4, duration: 2 },
+      { note: B, octave: 4, duration: 2 },
+      { note: A, octave: 4, duration: 4 },
+    ],
+  },
+  {
+    id: "summertime",
+    title: "Summertime",
+    composer: "George Gershwin",
+    tempo: 72,
+    signature: [4, 4],
+    notes: [
+      // "Summertime"
+      { note: E, octave: 4, duration: 2 },
+      { note: A, octave: 4, duration: 2 },
+      // "and the livin' is"
+      { note: B, octave: 4, duration: 1 },
+      { note: C, octave: 5, duration: 1 },
+      { note: B, octave: 4, duration: 1 },
+      { note: A, octave: 4, duration: 1 },
+      // "easy"
+      { note: A, octave: 4, duration: 2 },
+      { note: E, octave: 4, duration: 2 },
+      // (hold)
+      { note: E, octave: 4, duration: 4 },
+      // "Fish are jumpin'"
+      { note: E, octave: 4, duration: 2 },
+      { note: A, octave: 4, duration: 2 },
+      // "and the cotton is"
+      { note: B, octave: 4, duration: 1 },
+      { note: C, octave: 5, duration: 1 },
+      { note: B, octave: 4, duration: 1 },
+      { note: A, octave: 4, duration: 1 },
+      // "high"
+      { note: A, octave: 4, duration: 4 },
+      { note: G, octave: 4, duration: 4 },
+      // "Oh your daddy's rich"
+      { note: A, octave: 4, duration: 1 },
+      { note: C, octave: 5, duration: 1 },
+      { note: B, octave: 4, duration: 1 },
+      { note: A, octave: 4, duration: 1 },
+      // "and your ma is good lookin'"
+      { note: G, octave: 4, duration: 1 },
+      { note: F, octave: 4, duration: 1 },
+      { note: E, octave: 4, duration: 1 },
+      { note: D, octave: 4, duration: 1 },
+      // "so hush little baby"
+      { note: E, octave: 4, duration: 2 },
+      { note: D, octave: 4, duration: 2 },
+      // "don't you cry"
+      { note: E, octave: 4, duration: 1 },
+      { note: A, octave: 4, duration: 1 },
+      { note: E, octave: 4, duration: 2 },
+      // (ending)
+      { note: A, octave: 3, duration: 4 },
     ],
   },
 ];

@@ -20,13 +20,14 @@ import {
   Annotation,
   Dot,
   GhostNote,
+  StaveTie,
 } from "vexflow";
 
 // --- Helpers ---
 
-const NOTE_COLOR = "#a1a1aa"; // zinc-400
-const STAFF_LINE_COLOR = "#3f3f46"; // zinc-700
-const ACTIVE_HALO = "rgba(245,158,11,0.18)"; // amber glow
+const NOTE_COLOR = "#000000"; // black
+const STAFF_LINE_COLOR = "#000000"; // black
+const ACTIVE_HALO = "rgba(245,158,11,0.25)"; // amber glow
 
 /** Map our Note enum to a VexFlow key like "C/4" or "C#/4" */
 function toVexKey(note: TNote, octave: number): string {
@@ -52,10 +53,20 @@ function beatsToDur(beats: number): { dur: string; dots: number } {
 
 // --- Measure splitting ---
 
+interface TiePair {
+  from: StaveNote; // last note of a measure
+  to: StaveNote;   // first note of next measure
+}
+
 interface MeasureData {
   noteIndices: number[]; // indices into the original notes array
   vexNotes: StaveNote[];
   beamGroups: StaveNote[][];
+}
+
+interface MeasureResult {
+  measures: MeasureData[];
+  ties: TiePair[];
 }
 
 type DisplayNoteFn = (note: TNote) => string;
@@ -66,25 +77,64 @@ function addNoteLabel(vn: StaveNote, pn: PlayedNote, dn: DisplayNoteFn) {
   const annotation = new Annotation(label)
     .setVerticalJustification(Annotation.VerticalJustify.BOTTOM)
     .setJustification(Annotation.HorizontalJustify.CENTER);
-  annotation.setStyle({ fillStyle: "#71717a" }); // zinc-500
+  annotation.setStyle({ fillStyle: "#555555" }); // dark gray
   vn.addModifier(annotation);
 }
 
-/** Split score notes into measures using the time signature */
+/** Create a VexFlow StaveNote with styling and label */
+function makeVexNote(
+  key: string,
+  beats: number,
+  pn: PlayedNote,
+  originalIndex: number,
+  noteActiveIndex: number | null,
+  mode: string,
+  dn: DisplayNoteFn
+): StaveNote {
+  const { dur, dots } = beatsToDur(beats);
+  const vn = new StaveNote({ keys: [key], duration: dur, dots, autoStem: true });
+
+  if (isSharp(pn.note.writtenNote)) {
+    vn.addModifier(new Accidental("#"));
+  }
+  for (let d = 0; d < dots; d++) {
+    Dot.buildAndAttach([vn]);
+  }
+
+  applyNoteStyle(vn, originalIndex, noteActiveIndex, pn, mode);
+  addNoteLabel(vn, pn, dn);
+  return vn;
+}
+
+/** Split score notes into measures using the time signature, with ties across bar lines */
 function buildScoreMeasures(
   score: Score,
   notes: PlayedNote[],
   noteActiveIndex: number | null,
   mode: string,
   dn: DisplayNoteFn
-): MeasureData[] {
+): MeasureResult {
   const [beatsPerMeasure] = score.signature;
   const measures: MeasureData[] = [];
+  const ties: TiePair[] = [];
   let currentBeat = 0;
   let measureNoteIndices: number[] = [];
   let measureVexNotes: StaveNote[] = [];
   let beamGroup: StaveNote[] = [];
   let beamGroups: StaveNote[][] = [];
+
+  const flushMeasure = () => {
+    if (beamGroup.length >= 2) beamGroups.push([...beamGroup]);
+    beamGroup = [];
+    measures.push({
+      noteIndices: [...measureNoteIndices],
+      vexNotes: [...measureVexNotes],
+      beamGroups: [...beamGroups],
+    });
+    measureNoteIndices = [];
+    measureVexNotes = [];
+    beamGroups = [];
+  };
 
   for (let i = 0; i < score.notes.length; i++) {
     const sn = score.notes[i];
@@ -95,64 +145,60 @@ function buildScoreMeasures(
       currentBeat += sn.rest;
     }
 
-    const { dur, dots } = beatsToDur(sn.duration);
     const key = toVexKey(pn.note.writtenNote, pn.note.writtenOctave);
-    const vn = new StaveNote({ keys: [key], duration: dur, dots, autoStem: true });
+    const remaining = beatsPerMeasure - currentBeat;
 
-    // Accidental
-    if (isSharp(pn.note.writtenNote)) {
-      vn.addModifier(new Accidental("#"));
-    }
+    if (sn.duration > remaining + 0.001) {
+      // Note crosses bar line — split with a tie
+      const firstPart = makeVexNote(key, remaining, pn, i, noteActiveIndex, mode, dn);
+      measureNoteIndices.push(i);
+      measureVexNotes.push(firstPart);
 
-    // Dots
-    for (let d = 0; d < dots; d++) {
-      Dot.buildAndAttach([vn]);
-    }
-
-    // Style + label
-    applyNoteStyle(vn, i, noteActiveIndex, pn, mode);
-    addNoteLabel(vn, pn, dn);
-
-    measureNoteIndices.push(i);
-    measureVexNotes.push(vn);
-
-    // Collect beam groups (eighth notes or shorter)
-    if (sn.duration <= 0.5) {
-      beamGroup.push(vn);
-    } else {
+      // Flush current measure
       if (beamGroup.length >= 2) beamGroups.push([...beamGroup]);
       beamGroup = [];
-    }
+      flushMeasure();
+      currentBeat = 0;
 
-    currentBeat += sn.duration;
+      // Second part in new measure
+      const overflow = sn.duration - remaining;
+      const secondPart = makeVexNote(key, overflow, pn, i, noteActiveIndex, mode, dn);
+      measureNoteIndices.push(i);
+      measureVexNotes.push(secondPart);
+
+      ties.push({ from: firstPart, to: secondPart });
+
+      currentBeat = overflow;
+    } else {
+      // Note fits in current measure
+      const vn = makeVexNote(key, sn.duration, pn, i, noteActiveIndex, mode, dn);
+      measureNoteIndices.push(i);
+      measureVexNotes.push(vn);
+
+      // Collect beam groups (eighth notes or shorter)
+      if (sn.duration <= 0.5) {
+        beamGroup.push(vn);
+      } else {
+        if (beamGroup.length >= 2) beamGroups.push([...beamGroup]);
+        beamGroup = [];
+      }
+
+      currentBeat += sn.duration;
+    }
 
     // End of measure?
     if (currentBeat >= beatsPerMeasure - 0.001) {
-      if (beamGroup.length >= 2) beamGroups.push([...beamGroup]);
-      beamGroup = [];
-      measures.push({
-        noteIndices: [...measureNoteIndices],
-        vexNotes: [...measureVexNotes],
-        beamGroups: [...beamGroups],
-      });
-      measureNoteIndices = [];
-      measureVexNotes = [];
-      beamGroups = [];
+      flushMeasure();
       currentBeat = currentBeat - beatsPerMeasure;
     }
   }
 
   // Remaining notes
   if (measureVexNotes.length > 0) {
-    if (beamGroup.length >= 2) beamGroups.push([...beamGroup]);
-    measures.push({
-      noteIndices: measureNoteIndices,
-      vexNotes: measureVexNotes,
-      beamGroups,
-    });
+    flushMeasure();
   }
 
-  return measures;
+  return { measures, ties };
 }
 
 /** Build measures for live/replay mode (all quarter notes, 4 per measure) */
@@ -161,7 +207,7 @@ function buildLiveMeasures(
   noteActiveIndex: number | null,
   mode: string,
   dn: DisplayNoteFn
-): MeasureData[] {
+): MeasureResult {
   const NOTES_PER_MEASURE = 4;
   const measures: MeasureData[] = [];
 
@@ -190,7 +236,7 @@ function buildLiveMeasures(
     measures.push({ noteIndices, vexNotes, beamGroups: [] });
   }
 
-  return measures;
+  return { measures, ties: [] };
 }
 
 /** Apply color styling to a note based on active state and pitch accuracy */
@@ -210,8 +256,8 @@ function applyNoteStyle(
     vn.setStemStyle({ fillStyle: color, strokeStyle: color });
     vn.setFlagStyle({ fillStyle: color, strokeStyle: color });
   } else {
-    const opacity = activeIndex !== null && mode === "replay" ? 0.35 : 0.7;
-    const color = `rgba(161,161,170,${opacity})`; // zinc-400 with opacity
+    const opacity = activeIndex !== null && mode === "replay" ? 0.3 : 0.8;
+    const color = `rgba(0,0,0,${opacity})`; // black with opacity
     vn.setStyle({ fillStyle: color, strokeStyle: color });
     vn.setStemStyle({ fillStyle: color, strokeStyle: color });
     vn.setFlagStyle({ fillStyle: color, strokeStyle: color });
@@ -265,7 +311,7 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
         text.setAttribute("y", String(STAVE_Y + 45));
         text.setAttribute("text-anchor", "middle");
         text.setAttribute("font-size", "12");
-        text.setAttribute("fill", "#52525b");
+        text.setAttribute("fill", "#999999");
         text.textContent = mode === "live" ? t("staff.emptyLive") : t("staff.emptyReplay");
         svg.appendChild(text);
       }
@@ -273,7 +319,7 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
     }
 
     // Build measures
-    const measures = score
+    const { measures, ties } = score
       ? buildScoreMeasures(score, notes, noteActiveIndex, mode, dn)
       : buildLiveMeasures(notes, noteActiveIndex, mode, dn);
 
@@ -337,6 +383,18 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
       x += w;
     });
 
+    // Draw ties across bar lines
+    for (const tie of ties) {
+      const staveTie = new StaveTie({
+        firstNote: tie.from,
+        lastNote: tie.to,
+        firstIndexes: [0],
+        lastIndexes: [0],
+      });
+      staveTie.setStyle({ fillStyle: NOTE_COLOR, strokeStyle: NOTE_COLOR });
+      staveTie.setContext(ctx).draw();
+    }
+
     // Draw active note halo as SVG overlay
     if (noteActiveIndex !== null) {
       const svg = container.querySelector("svg");
@@ -392,13 +450,13 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
   }, [noteActiveIndex, mode, notes, score]);
 
   return (
-    <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
       <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+        <h2 className="text-sm font-medium text-zinc-600 uppercase tracking-wider">
           {t("staff.title")}
         </h2>
         {mode === "replay" && noteActiveIndex !== null && (
-          <span className="text-[10px] text-amber-500/70 bg-amber-500/10 px-1.5 py-0.5 rounded">
+          <span className="text-[10px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">
             {t("staff.playing")}
           </span>
         )}
