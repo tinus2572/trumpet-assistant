@@ -79,6 +79,7 @@ const translations = {
     en: "No score found. Ask me to add one!",
   },
   "scores.listen": { fr: "\u00C9couter", en: "Listen" },
+  "scores.listenCountdown": { fr: "\u00C9couter apr\u00E8s d\u00E9compte", en: "Listen after countdown" },
   "scores.stop": { fr: "Arr\u00EAter", en: "Stop" },
   "scores.muted": { fr: "Muet", en: "Muted" },
   "scores.sound": { fr: "Son", en: "Sound" },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import {
   Note as TNote,
   PlayedNote,
@@ -21,6 +21,7 @@ import {
   Dot,
   GhostNote,
   StaveTie,
+  Tuplet,
 } from "vexflow";
 
 // --- Helpers ---
@@ -28,6 +29,13 @@ import {
 const NOTE_COLOR = "#000000"; // black
 const STAFF_LINE_COLOR = "#000000"; // black
 const ACTIVE_HALO = "rgba(245,158,11,0.25)"; // amber glow
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/** VexFlow note line for a pitch (E4 = 1 = bottom line of the treble staff, lines/spaces step by 0.5) */
+function pitchToLine(note: TNote, octave: number): number {
+  const diatonic = "CDEFGAB".indexOf(note[0]) + octave * 7;
+  return (diatonic - 28) / 2;
+}
 
 /** Map our Note enum to a VexFlow key like "C/4" or "C#/4" */
 function toVexKey(note: TNote, octave: number): string {
@@ -39,8 +47,15 @@ function isSharp(note: TNote): boolean {
   return note.includes("#");
 }
 
+/** Is this duration a triplet value (triplet quarter or triplet eighth)? */
+function isTriplet(beats: number): boolean {
+  return Math.abs(beats - 2 / 3) < 0.01 || Math.abs(beats - 1 / 3) < 0.01;
+}
+
 /** Map beat duration to VexFlow duration string + dot count */
 function beatsToDur(beats: number): { dur: string; dots: number } {
+  if (Math.abs(beats - 2 / 3) < 0.01) return { dur: "q", dots: 0 };
+  if (Math.abs(beats - 1 / 3) < 0.01) return { dur: "8", dots: 0 };
   if (beats >= 4) return { dur: "w", dots: 0 };
   if (beats >= 3) return { dur: "h", dots: 1 };
   if (beats >= 2) return { dur: "h", dots: 0 };
@@ -49,6 +64,16 @@ function beatsToDur(beats: number): { dur: string; dots: number } {
   if (beats >= 0.75) return { dur: "8", dots: 1 };
   if (beats >= 0.5) return { dur: "8", dots: 0 };
   return { dur: "16", dots: 0 };
+}
+
+const REST_CHUNKS = [4, 2, 1, 0.5, 0.25];
+
+/** Create a VexFlow rest of the given beat length */
+function makeRest(beats: number): StaveNote {
+  const { dur } = beatsToDur(beats);
+  const rest = new StaveNote({ keys: ["b/4"], duration: `${dur}r` });
+  rest.setStyle({ fillStyle: "rgba(0,0,0,0.8)", strokeStyle: "rgba(0,0,0,0.8)" });
+  return rest;
 }
 
 // --- Measure splitting ---
@@ -62,6 +87,7 @@ interface MeasureData {
   noteIndices: number[]; // indices into the original notes array
   vexNotes: StaveNote[];
   beamGroups: StaveNote[][];
+  tupletGroups: StaveNote[][];
 }
 
 interface MeasureResult {
@@ -117,23 +143,55 @@ function buildScoreMeasures(
   const [beatsPerMeasure] = score.signature;
   const measures: MeasureData[] = [];
   const ties: TiePair[] = [];
-  let currentBeat = 0;
+  // A pickup measure starts partway through the bar
+  let currentBeat = score.pickup ? beatsPerMeasure - score.pickup : 0;
   let measureNoteIndices: number[] = [];
   let measureVexNotes: StaveNote[] = [];
   let beamGroup: StaveNote[] = [];
   let beamGroups: StaveNote[][] = [];
+  let tupletGroup: StaveNote[] = [];
+  let tupletGroups: StaveNote[][] = [];
 
   const flushMeasure = () => {
     if (beamGroup.length >= 2) beamGroups.push([...beamGroup]);
     beamGroup = [];
+    if (tupletGroup.length > 0) tupletGroups.push([...tupletGroup]);
+    tupletGroup = [];
     measures.push({
       noteIndices: [...measureNoteIndices],
       vexNotes: [...measureVexNotes],
       beamGroups: [...beamGroups],
+      tupletGroups: [...tupletGroups],
     });
     measureNoteIndices = [];
     measureVexNotes = [];
     beamGroups = [];
+    tupletGroups = [];
+  };
+
+  const breakBeam = () => {
+    if (beamGroup.length >= 2) beamGroups.push([...beamGroup]);
+    beamGroup = [];
+  };
+
+  // Draw a rest, split into bar-aligned chunks and across bar lines
+  const addRest = (beats: number) => {
+    breakBeam();
+    let left = beats;
+    while (left > 0.001) {
+      const remaining = beatsPerMeasure - currentBeat;
+      const chunk = REST_CHUNKS.find(
+        (c) => c <= left + 0.001 && c <= remaining + 0.001 && Math.abs(currentBeat / c - Math.round(currentBeat / c)) < 0.001
+      ) ?? Math.min(left, remaining);
+      measureNoteIndices.push(-1);
+      measureVexNotes.push(makeRest(chunk));
+      currentBeat += chunk;
+      left -= chunk;
+      if (currentBeat >= beatsPerMeasure - 0.001) {
+        flushMeasure();
+        currentBeat = 0;
+      }
+    }
   };
 
   for (let i = 0; i < score.notes.length; i++) {
@@ -142,7 +200,7 @@ function buildScoreMeasures(
 
     // Handle rest before note
     if (sn.rest && sn.rest > 0) {
-      currentBeat += sn.rest;
+      addRest(sn.rest);
     }
 
     const key = toVexKey(pn.note.writtenNote, pn.note.writtenOctave);
@@ -174,6 +232,15 @@ function buildScoreMeasures(
       const vn = makeVexNote(key, sn.duration, pn, i, noteActiveIndex, mode, dn);
       measureNoteIndices.push(i);
       measureVexNotes.push(vn);
+
+      // Collect triplet groups (3 notes each)
+      if (isTriplet(sn.duration)) {
+        tupletGroup.push(vn);
+        if (tupletGroup.length === 3) {
+          tupletGroups.push([...tupletGroup]);
+          tupletGroup = [];
+        }
+      }
 
       // Collect beam groups (eighth notes or shorter)
       if (sn.duration <= 0.5) {
@@ -233,7 +300,7 @@ function buildLiveMeasures(
       vexNotes.push(vn);
     }
 
-    measures.push({ noteIndices, vexNotes, beamGroups: [] });
+    measures.push({ noteIndices, vexNotes, beamGroups: [], tupletGroups: [] });
   }
 
   return { measures, ties: [] };
@@ -267,6 +334,7 @@ function applyNoteStyle(
 // --- Constants ---
 const STAVE_HEIGHT = 180;
 const STAVE_Y = 20;
+const LINE_SPACING = 160; // vertical distance between stave rows
 const FIRST_MEASURE_WIDTH = 220; // wider for clef + time sig
 const MEASURE_WIDTH = 180;
 
@@ -277,23 +345,85 @@ interface StaffProps {
   noteActiveIndex: number | null;
   mode: "live" | "replay";
   score?: Score;
+  /** Pitch currently heard on the mic: its staff line/space is highlighted */
+  highlight?: { note: TNote; octave: number; color: string } | null;
 }
 
-export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProps) {
+interface StaveRow {
+  stave: Stave; // first stave of the row, used for y geometry
+  width: number;
+}
+
+export default function Staff({ notes, noteActiveIndex, mode, score, highlight }: StaffProps) {
   const { t, dn } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const rowsRef = useRef<StaveRow[]>([]);
+  const overlayRef = useRef<SVGGElement | null>(null);
+  const highlightRef = useRef(highlight);
+
+  // Draw the mic pitch highlight in an overlay group behind the notes, without re-rendering VexFlow
+  const drawHighlight = useCallback(() => {
+    const overlay = overlayRef.current;
+    if (!overlay) return;
+    overlay.replaceChildren();
+    const hl = highlightRef.current;
+    if (!hl) return;
+
+    const line = pitchToLine(hl.note, hl.octave);
+    const onLine = Number.isInteger(line);
+    for (const { stave, width } of rowsRef.current) {
+      const y = stave.getYForNote(line);
+      const spacing = stave.getSpacingBetweenLines();
+      const band = document.createElementNS(SVG_NS, "rect");
+      band.setAttribute("x", "0");
+      band.setAttribute("y", String(y - spacing / 2));
+      band.setAttribute("width", String(width));
+      band.setAttribute("height", String(spacing));
+      band.setAttribute("fill", hl.color);
+      band.setAttribute("fill-opacity", onLine ? "0.15" : "0.3");
+      overlay.appendChild(band);
+      if (onLine) {
+        const stroke = document.createElementNS(SVG_NS, "line");
+        stroke.setAttribute("x1", "0");
+        stroke.setAttribute("x2", String(width));
+        stroke.setAttribute("y1", String(y));
+        stroke.setAttribute("y2", String(y));
+        stroke.setAttribute("stroke", hl.color);
+        stroke.setAttribute("stroke-width", "3");
+        stroke.setAttribute("stroke-opacity", "0.8");
+        overlay.appendChild(stroke);
+      }
+    }
+  }, []);
+
+  // Track wrapper width for multi-line layout
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    ro.observe(el);
+    setContainerWidth(el.clientWidth);
+    return () => ro.disconnect();
+  }, []);
 
   const render = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Clear previous render
     container.innerHTML = "";
+    rowsRef.current = [];
+    overlayRef.current = null;
+
+    const availWidth = containerWidth || container.clientWidth || 600;
 
     if (notes.length === 0) {
-      // Empty state: render a single empty stave with clef
-      const svgW = 400;
+      const svgW = Math.max(availWidth, 300);
       const renderer = new Renderer(container, Renderer.Backends.SVG);
       renderer.resize(svgW, STAVE_HEIGHT);
       const ctx = renderer.getContext();
@@ -303,7 +433,6 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
       stave.setStyle({ fillStyle: STAFF_LINE_COLOR, strokeStyle: STAFF_LINE_COLOR });
       stave.setContext(ctx).draw();
 
-      // Empty state text
       const svg = container.querySelector("svg");
       if (svg) {
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -323,83 +452,100 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
       ? buildScoreMeasures(score, notes, noteActiveIndex, mode, dn)
       : buildLiveMeasures(notes, noteActiveIndex, mode, dn);
 
-    // Calculate total width
-    const totalWidth = measures.reduce(
-      (acc, _, i) => acc + (i === 0 ? FIRST_MEASURE_WIDTH : MEASURE_WIDTH),
-      40 // right padding
-    );
+    // Group measures into lines based on available width
+    const lines: number[][] = [];
+    let currentLine: number[] = [];
+    let lineWidth = 0;
+    for (let mi = 0; mi < measures.length; mi++) {
+      const w = currentLine.length === 0 ? FIRST_MEASURE_WIDTH : MEASURE_WIDTH;
+      if (lineWidth + w > availWidth && currentLine.length > 0) {
+        lines.push(currentLine);
+        currentLine = [mi];
+        lineWidth = FIRST_MEASURE_WIDTH;
+      } else {
+        currentLine.push(mi);
+        lineWidth += w;
+      }
+    }
+    if (currentLine.length > 0) lines.push(currentLine);
+
+    const totalHeight = STAVE_Y + lines.length * LINE_SPACING;
+    const svgW = Math.max(availWidth, 300);
 
     const renderer = new Renderer(container, Renderer.Backends.SVG);
-    renderer.resize(totalWidth, STAVE_HEIGHT);
+    renderer.resize(svgW, totalHeight);
     const ctx = renderer.getContext();
 
-    let x = 0;
-    let activeMeasureX = 0;
-    let activeNoteLocalIdx = 0;
+    lines.forEach((measureIndices, lineIdx) => {
+      const y = STAVE_Y + lineIdx * LINE_SPACING;
+      let x = 0;
+      let rowStave: Stave | null = null;
 
-    measures.forEach((measure, mi) => {
-      const isFirst = mi === 0;
-      const isLast = mi === measures.length - 1;
-      const w = isFirst ? FIRST_MEASURE_WIDTH : MEASURE_WIDTH;
+      measureIndices.forEach((mi, localIdx) => {
+        const measure = measures[mi];
+        const isFirstInLine = localIdx === 0;
+        const w = isFirstInLine ? FIRST_MEASURE_WIDTH : MEASURE_WIDTH;
 
-      const stave = new Stave(x, STAVE_Y, w);
-      stave.setStyle({ fillStyle: STAFF_LINE_COLOR, strokeStyle: STAFF_LINE_COLOR });
+        const stave = new Stave(x, y, w);
+        stave.setStyle({ fillStyle: STAFF_LINE_COLOR, strokeStyle: STAFF_LINE_COLOR });
 
-      if (isFirst) {
-        stave.addClef("treble");
-        if (score) {
-          stave.setTimeSignature(`${score.signature[0]}/${score.signature[1]}`);
+        if (isFirstInLine) {
+          stave.addClef("treble");
+          if (lineIdx === 0 && score) {
+            stave.setTimeSignature(`${score.signature[0]}/${score.signature[1]}`);
+          }
         }
-      }
 
-      stave.setContext(ctx).draw();
+        stave.setContext(ctx).draw();
+        rowStave ??= stave;
 
-      // Voice
-      const voice = new Voice(
-        score
-          ? { numBeats: score.signature[0], beatValue: score.signature[1] }
-          : { numBeats: 4, beatValue: 4 }
-      );
-      voice.setMode(VoiceMode.SOFT);
-      voice.addTickables(measure.vexNotes);
+        const voice = new Voice(
+          score
+            ? { numBeats: score.signature[0], beatValue: score.signature[1] }
+            : { numBeats: 4, beatValue: 4 }
+        );
+        voice.setMode(VoiceMode.SOFT);
+        const tuplets = measure.tupletGroups.map((group) => new Tuplet(group));
+        voice.addTickables(measure.vexNotes);
+        new Formatter().joinVoices([voice]).format([voice], w - (isFirstInLine ? 80 : 30));
 
-      new Formatter().joinVoices([voice]).format([voice], w - (isFirst ? 80 : 30));
+        const beams = measure.beamGroups.map((group) => new Beam(group));
+        voice.draw(ctx, stave);
+        beams.forEach((b) => b.setContext(ctx).draw());
+        tuplets.forEach((tp) => tp.setContext(ctx).draw());
 
-      // Beams
-      const beams = measure.beamGroups.map((group) => new Beam(group));
+        measure.vexNotes.forEach((vn, li) => {
+          const idx = measure.noteIndices[li];
+          if (idx >= 0) vn.getSVGElement()?.setAttribute("data-note-index", String(idx));
+        });
 
-      voice.draw(ctx, stave);
-      beams.forEach((b) => b.setContext(ctx).draw());
-
-      // Track active note position for scrolling
-      if (noteActiveIndex !== null) {
-        const localIdx = measure.noteIndices.indexOf(noteActiveIndex);
-        if (localIdx !== -1) {
-          activeMeasureX = x;
-          activeNoteLocalIdx = localIdx;
-        }
-      }
-
-      x += w;
+        x += w;
+      });
+      if (rowStave) rowsRef.current.push({ stave: rowStave, width: x });
     });
 
-    // Draw ties across bar lines
+    // Draw ties (only when both notes are on the same line)
     for (const tie of ties) {
-      const staveTie = new StaveTie({
-        firstNote: tie.from,
-        lastNote: tie.to,
-        firstIndexes: [0],
-        lastIndexes: [0],
-      });
-      staveTie.setStyle({ fillStyle: NOTE_COLOR, strokeStyle: NOTE_COLOR });
-      staveTie.setContext(ctx).draw();
+      const fromMi = measures.findIndex(m => m.vexNotes.includes(tie.from));
+      const toMi = measures.findIndex(m => m.vexNotes.includes(tie.to));
+      const fromLine = lines.findIndex(line => line.includes(fromMi));
+      const toLine = lines.findIndex(line => line.includes(toMi));
+      if (fromLine === toLine && fromLine !== -1) {
+        const staveTie = new StaveTie({
+          firstNote: tie.from,
+          lastNote: tie.to,
+          firstIndexes: [0],
+          lastIndexes: [0],
+        });
+        staveTie.setStyle({ fillStyle: NOTE_COLOR, strokeStyle: NOTE_COLOR });
+        staveTie.setContext(ctx).draw();
+      }
     }
 
-    // Draw active note halo as SVG overlay
+    // Draw active note halo
     if (noteActiveIndex !== null) {
       const svg = container.querySelector("svg");
       if (svg) {
-        // Find the active note's bounding box by looking at the rendered note heads
         const noteElements = svg.querySelectorAll(".vf-stavenote");
         let globalIdx = 0;
         for (const measure of measures) {
@@ -416,7 +562,6 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
               halo.setAttribute("ry", "12");
               halo.setAttribute("fill", ACTIVE_HALO);
               halo.setAttribute("stroke", "none");
-              // Insert behind notes
               svg.insertBefore(halo, svg.firstChild);
             }
             globalIdx++;
@@ -424,30 +569,31 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
         }
       }
     }
-  }, [notes, noteActiveIndex, mode, score, t, dn]);
+
+    const svg = container.querySelector("svg");
+    if (svg) {
+      const overlay = document.createElementNS(SVG_NS, "g");
+      svg.insertBefore(overlay, svg.firstChild);
+      overlayRef.current = overlay;
+      drawHighlight();
+    }
+  }, [notes, noteActiveIndex, mode, score, t, dn, containerWidth, drawHighlight]);
+
+  // Declared before the render effect so the ref is current when the SVG is rebuilt
+  const hlNote = highlight?.note;
+  const hlOctave = highlight?.octave;
+  const hlColor = highlight?.color;
+  useEffect(() => {
+    highlightRef.current =
+      hlNote !== undefined && hlOctave !== undefined && hlColor !== undefined
+        ? { note: hlNote, octave: hlOctave, color: hlColor }
+        : null;
+    drawHighlight();
+  }, [hlNote, hlOctave, hlColor, drawHighlight]);
 
   useEffect(() => {
     render();
   }, [render]);
-
-  // Auto-scroll to active note
-  useEffect(() => {
-    if (noteActiveIndex === null || !scrollRef.current) return;
-
-    // Find the rendered active note element and scroll to it
-    const container = scrollRef.current;
-    const noteEls = container.querySelectorAll(".vf-stavenote");
-    if (noteEls[noteActiveIndex]) {
-      const el = noteEls[noteActiveIndex] as HTMLElement;
-      const elRect = el.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      const scrollTarget = container.scrollLeft + (elRect.left - containerRect.left) - container.clientWidth / 2 + elRect.width / 2;
-      container.scrollTo({
-        left: scrollTarget,
-        behavior: mode === "live" ? "smooth" : "auto",
-      });
-    }
-  }, [noteActiveIndex, mode, notes, score]);
 
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
@@ -461,7 +607,7 @@ export default function Staff({ notes, noteActiveIndex, mode, score }: StaffProp
           </span>
         )}
       </div>
-      <div ref={scrollRef} className="overflow-x-auto px-2 pb-3">
+      <div ref={wrapperRef} className="px-2 pb-3">
         <div ref={containerRef} />
       </div>
     </div>

@@ -51,8 +51,9 @@ export default function TrumpetAnalyzer() {
   const [recording, setRecording] = useState(false);
   const [currentNote, setCurrentNote] = useState<NoteInfo | null>(null);
   const [playedNotes, setPlayedNotes] = useState<PlayedNote[]>([]);
-  const [history, setHistory] = useState<Recording[]>(() => {
-    if (typeof window === "undefined") return [];
+  const [history, setHistory] = useState<Recording[]>([]);
+
+  useEffect(() => {
     const brut = loadHistory().map((e) =>
       e.summary ? e : { ...e, summary: computeSummary(e.notes ?? []) }
     );
@@ -63,8 +64,8 @@ export default function TrumpetAnalyzer() {
       return true;
     });
     if (dedup.length !== brut.length) saveHistory(dedup);
-    return dedup;
-  });
+    setHistory(dedup);
+  }, []);
   const [selectionId, setSelectionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
@@ -536,6 +537,7 @@ export default function TrumpetAnalyzer() {
           <ScorePlayer
             onRequestMic={!listening ? startListening : undefined}
             micActive={listening}
+            liveNote={listening ? currentNote : null}
           />
         </div>
 
