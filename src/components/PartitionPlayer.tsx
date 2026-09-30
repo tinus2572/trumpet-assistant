@@ -10,6 +10,7 @@ import {
 import { TrumpetSynth } from "@/lib/synth-trumpet";
 import { useI18n } from "@/lib/i18n";
 import Staff from "./Staff";
+import TileView, { TILE_LOOKAHEAD } from "./TileView";
 import { Note, NoteInfo, PlayedNote, NOTE_TO_SEMITONE, evaluatePitch } from "@/lib/trumpet";
 
 // Transposition steps: Do3 ↔ Sol3 ↔ Do4 ↔ Sol4 ↔ Do5
@@ -100,6 +101,9 @@ export default function ScorePlayer({
   const [muted, setMuted] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [transposeIdx, setTransposeIdx] = useState(DEFAULT_TRANSPOSE_IDX);
+  const [view, setView] = useState<"sheet" | "tiles">("sheet");
+  // performance.now() at which the first beat reaches the tile hit line
+  const [tileOrigin, setTileOrigin] = useState<number | null>(null);
   const transposedScore = useMemo(
     () =>
       activeScore
@@ -133,6 +137,8 @@ export default function ScorePlayer({
 
     setPlaying(true);
     setNoteActiveIdx(null);
+    // Without a countdown the tiles start right at the line
+    setTileOrigin((o) => (o !== null && o > performance.now() - 100 ? o : performance.now()));
 
     synth.playScore(transposedScore, {
       volume: muted ? 0 : volume,
@@ -156,12 +162,14 @@ export default function ScorePlayer({
     synthRef.current?.stop();
     setPlaying(false);
     setNoteActiveIdx(null);
+    setTileOrigin(null);
   }, []);
 
   const cancelCountdown = useCallback(() => {
     if (countdownRef.current) clearInterval(countdownRef.current);
     countdownRef.current = null;
     setCountdown(null);
+    setTileOrigin(null);
   }, []);
 
   const playWithCountdown = useCallback(() => {
@@ -170,6 +178,8 @@ export default function ScorePlayer({
       return;
     }
     setCountdown(3);
+    // Tiles start falling now and reach the line when the countdown ends
+    setTileOrigin(performance.now() + TILE_LOOKAHEAD * 1000);
     countdownRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev === null || prev <= 1) {
@@ -323,14 +333,41 @@ export default function ScorePlayer({
             </button>
           </div>
 
-          {/* Staff */}
-          <Staff
-            notes={notesStaff}
-            noteActiveIndex={noteActiveIdx}
-            mode={playing ? "replay" : "live"}
-            score={transposedScore ?? undefined}
-            highlight={staffHighlight}
-          />
+          {/* View switch */}
+          <div className="inline-flex rounded-lg border border-zinc-700 overflow-hidden text-xs">
+            {(["sheet", "tiles"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-3 py-1.5 transition-colors ${
+                  view === v
+                    ? "bg-amber-500 text-zinc-900 font-bold"
+                    : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                {v === "sheet" ? t("scores.viewSheet") : t("scores.viewTiles")}
+              </button>
+            ))}
+          </div>
+
+          {view === "sheet" ? (
+            <Staff
+              notes={notesStaff}
+              noteActiveIndex={noteActiveIdx}
+              mode={playing ? "replay" : "live"}
+              score={transposedScore ?? undefined}
+              highlight={staffHighlight}
+            />
+          ) : (
+            transposedScore && (
+              <TileView
+                score={transposedScore}
+                origin={tileOrigin}
+                liveNote={liveNote ?? null}
+                micActive={!!micActive}
+              />
+            )
+          )}
 
           {/* Playback controls */}
           <div className="flex items-center gap-3 flex-wrap">
@@ -410,7 +447,7 @@ export default function ScorePlayer({
           <div className="text-xs text-zinc-600 bg-zinc-800/50 rounded-lg px-3 py-2">
             <p>
               <strong className="text-zinc-500">{t("scores.howTo")}</strong>{" "}
-              {t("scores.instructions")}
+              {view === "tiles" ? t("tiles.instructions") : t("scores.instructions")}
             </p>
           </div>
         </div>

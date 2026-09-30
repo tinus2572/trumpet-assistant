@@ -92,6 +92,24 @@ const translations = {
     en: "Listen to the score first, then enable the mic and play along. Mute the sound to play without a guide and compare your pitch.",
   },
 
+  "scores.viewSheet": { fr: "Partition", en: "Sheet" },
+  "scores.viewTiles": { fr: "Tuiles", en: "Tiles" },
+
+  // Tile view
+  "tiles.accuracy": { fr: "R\u00E9ussite", en: "Accuracy" },
+  "tiles.perfect": { fr: "Parfait !", en: "Perfect!" },
+  "tiles.good": { fr: "Bien", en: "Good" },
+  "tiles.miss": { fr: "Rat\u00E9", en: "Miss" },
+  "tiles.combo": { fr: "S\u00E9rie", en: "Combo" },
+  "tiles.bestCombo": { fr: "Meilleure s\u00E9rie", en: "Best combo" },
+  "tiles.notesHit": { fr: "notes r\u00E9ussies", en: "notes hit" },
+  "tiles.micHint": { fr: "Activez le micro pour jouer", en: "Enable the mic to play" },
+  "tiles.startHint": { fr: "Appuyez sur 3\u2026 2\u2026 1\u2026 pour commencer", en: "Press 3\u2026 2\u2026 1\u2026 to start" },
+  "tiles.instructions": {
+    fr: "Jouez chaque note quand sa tuile atteint la ligne, et tenez-la tant que la tuile la traverse. Coupez le son pour que le micro n'entende que vous.",
+    en: "Play each note when its tile reaches the line, and hold it while the tile crosses it. Mute the sound so the mic only hears you.",
+  },
+
   // Notes
   "note.singular": { fr: "note", en: "note" },
   "note.plural": { fr: "notes", en: "notes" },

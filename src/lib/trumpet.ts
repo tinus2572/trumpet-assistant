@@ -135,6 +135,42 @@ export function formatValves(pistons: [boolean, boolean, boolean]): string {
   return active.join(" + ");
 }
 
+export interface ScaleNote {
+  name: Note;
+  octave: number;
+  natural: boolean;
+  pistons: [boolean, boolean, boolean];
+  fingeringLabel: string;
+}
+
+/** Written MIDI number of a note (C4 = 60) */
+export function noteToMidi(note: Note, octave: number): number {
+  return (octave + 1) * 12 + NOTE_TO_SEMITONE[note];
+}
+
+/** Chromatic run of written notes between two MIDI numbers (inclusive) */
+export function chromaticRange(fromMidi: number, toMidi: number): ScaleNote[] {
+  const notes: ScaleNote[] = [];
+  for (let midi = fromMidi; midi <= toMidi; midi++) {
+    const semitone = ((midi % 12) + 12) % 12;
+    const name = NOTE_NAMES[semitone];
+    const pistons = getValves(semitone);
+    notes.push({
+      name,
+      octave: Math.floor(midi / 12) - 1,
+      natural: !name.includes("#"),
+      pistons,
+      fingeringLabel: formatValves(pistons),
+    });
+  }
+  return notes;
+}
+
+// Written range of the Bb trumpet: F#3 -> C6 (31 notes)
+export const TRUMPET_LOW_MIDI = 54;
+export const TRUMPET_HIGH_MIDI = 84;
+export const TRUMPET_RANGE = chromaticRange(TRUMPET_LOW_MIDI, TRUMPET_HIGH_MIDI);
+
 // Qualitative pitch accuracy evaluation (returns i18n keys)
 export type PitchQualityKey = "pitch.excellent" | "pitch.veryGood" | "pitch.good" | "pitch.acceptable" | "pitch.toFix";
 
