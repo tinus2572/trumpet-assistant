@@ -1,6 +1,155 @@
 @import "tailwindcss";
 
+/* --- Neobrutalist design tokens --- */
+@theme {
+  --color-ink: #121212;
+  --color-paper: #fff6e5;
+  --color-card: #ffffff;
+  --color-muted: #f3ead6;
+  --color-sun: #ffd23f;
+  --color-sun-deep: #f5b700;
+  --color-sky: #74c7ff;
+  --color-mint: #7ee2a8;
+  --color-tomato: #ff6b57;
+  --color-pink: #ff9ad5;
+  --color-grape: #c3a6ff;
+
+  --shadow-nb-sm: 2px 2px 0 0 var(--color-ink);
+  --shadow-nb: 4px 4px 0 0 var(--color-ink);
+  --shadow-nb-lg: 6px 6px 0 0 var(--color-ink);
+
+  --radius-nb: 10px;
+}
+
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-archivo-black), var(--font-space-grotesk), sans-serif;
+  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+}
+
+/* --- Building blocks --- */
+
+/* White panel with ink border and hard shadow */
+@utility nb-card {
+  background-color: var(--color-card);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-nb);
+  box-shadow: var(--shadow-nb);
+}
+
+/* Pressable button: lifts on hover, presses flat on click */
+@utility nb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-nb);
+  box-shadow: var(--shadow-nb-sm);
+  font-weight: 700;
+  color: var(--color-ink);
+  transition:
+    transform 80ms ease,
+    box-shadow 80ms ease,
+    background-color 120ms ease;
+  &:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 0 var(--color-ink);
+  }
+  &:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+/* Small toggle chip: filters, tags, segmented options */
+@utility nb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.625rem;
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  background-color: var(--color-card);
+  transition:
+    transform 80ms ease,
+    box-shadow 80ms ease,
+    background-color 120ms ease;
+  &:hover {
+    box-shadow: var(--shadow-nb-sm);
+    transform: translate(-1px, -1px);
+  }
+}
+
+@utility nb-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-nb);
+  background-color: var(--color-card);
+  color: var(--color-ink);
+  font-weight: 500;
+  &::placeholder {
+    color: color-mix(in srgb, var(--color-ink) 45%, transparent);
+  }
+  &:focus {
+    outline: none;
+    box-shadow: var(--shadow-nb-sm);
+    background-color: #fffdf6;
+  }
+}
+
+/* Section heading inside a card */
+@utility nb-label {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+/* Range sliders: ink track, yellow thumb */
+input[type="range"].nb-range {
+  appearance: none;
+  height: 8px;
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  background: var(--color-card);
+  cursor: pointer;
+}
+input[type="range"].nb-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  background: var(--color-sun);
+  box-shadow: var(--shadow-nb-sm);
+}
+input[type="range"].nb-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  background: var(--color-sun);
+}
+
+body {
+  background-color: var(--color-paper);
+  /* Subtle dot grid */
+  background-image: radial-gradient(color-mix(in srgb, var(--color-ink) 9%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  color: var(--color-ink);
+}
+
+::selection {
+  background: var(--color-sun);
+  color: var(--color-ink);
 }

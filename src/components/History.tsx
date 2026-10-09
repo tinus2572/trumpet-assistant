@@ -54,15 +54,15 @@ export default function History({
 
   if (recordings.length === 0) {
     return (
-      <div className="text-center text-zinc-500 py-8">
-        <p>{t("history.empty1")}</p>
-        <p className="text-sm mt-1">{t("history.empty2")}</p>
+      <div className="text-center py-8 border-2 border-dashed border-ink rounded-nb bg-paper">
+        <p className="font-bold">🎙️ {t("history.empty1")}</p>
+        <p className="text-sm mt-1 text-ink/60">{t("history.empty2")}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {recordings.map((e) => {
         const selected = selectionId === e.id;
         const isTrimming = trimId === e.id;
@@ -72,30 +72,30 @@ export default function History({
           <div
             key={e.id}
             onClick={() => onSelect(e)}
-            className={`p-3 rounded-lg cursor-pointer transition-colors border ${
+            className={`p-3 rounded-nb cursor-pointer transition-all border-2 border-ink ${
               selected
-                ? "border-amber-500 bg-amber-500/10"
-                : "border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800"
+                ? "bg-paper shadow-nb-sm"
+                : "bg-card hover:shadow-nb-sm hover:-translate-x-px hover:-translate-y-px"
             }`}
           >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-zinc-200">{e.date}</p>
-                <p className="text-xs text-zinc-400 mt-1">
+                <p className="text-sm font-bold">{e.date}</p>
+                <p className="text-xs font-medium text-ink/60 mt-1">
                   {e.summary.totalNotes} {e.summary.totalNotes > 1 ? t("note.plural") : t("note.singular")} {t("history.detected")}
                   {" · "}
                   {t("history.duration")} : {Math.round(e.duration)}s
                 </p>
-                <p className="text-xs mt-1">
-                  <span className="text-zinc-500">{t("history.avgPitch")} : </span>
+                <p className="text-xs mt-1.5 flex items-center gap-1.5">
+                  <span className="font-medium text-ink/60">{t("history.avgPitch")} :</span>
                   <span
-                    className={
+                    className={`font-mono font-bold px-1.5 border-2 border-ink rounded-md ${
                       Math.abs(e.summary.avgPitchOffset) <= 10
-                        ? "text-green-400"
+                        ? "bg-mint"
                         : Math.abs(e.summary.avgPitchOffset) <= 25
-                        ? "text-yellow-400"
-                        : "text-red-400"
-                    }
+                        ? "bg-sun"
+                        : "bg-tomato"
+                    }`}
                   >
                     {e.summary.avgPitchOffset > 0 ? "+" : ""}
                     {e.summary.avgPitchOffset} cents
@@ -107,14 +107,14 @@ export default function History({
                   ev.stopPropagation();
                   onDelete(e.id);
                 }}
-                className="text-zinc-600 hover:text-red-400 transition-colors text-xs px-2 py-1"
+                className="nb-btn bg-card hover:bg-tomato w-7 h-7 text-xs"
                 title={t("history.delete")}
               >
                 &#10005;
               </button>
             </div>
             {selected && (
-              <div className="mt-3 pt-3 border-t border-zinc-700" onClick={(ev) => ev.stopPropagation()}>
+              <div className="mt-3 pt-3 border-t-2 border-ink" onClick={(ev) => ev.stopPropagation()}>
                 {/* Replay staff */}
                 {e.notes.length > 0 && (
                   <div className="mb-3">
@@ -134,16 +134,10 @@ export default function History({
                     return (
                       <span
                         key={i}
-                        className={`text-xs px-2 py-0.5 rounded-full transition-all ${
-                          isReplayActive
-                            ? "ring-1 ring-offset-1 ring-offset-zinc-900 scale-110"
-                            : ""
+                        className={`text-xs font-bold px-2 py-0.5 rounded-full border-2 border-ink transition-all ${
+                          isReplayActive ? "scale-110 shadow-nb-sm" : ""
                         }`}
-                        style={{
-                          backgroundColor: isReplayActive ? j.color + "30" : "#3f3f46",
-                          color: isReplayActive ? j.color : "#d4d4d8",
-                          outlineColor: isReplayActive ? j.color : undefined,
-                        }}
+                        style={{ backgroundColor: isReplayActive ? j.color : "#fff" }}
                         title={`${n.note.centsOffset > 0 ? "+" : ""}${n.note.centsOffset} cents · Pistons: ${n.note.fingeringLabel}`}
                       >
                         {dn(n.note.writtenNote)}{n.note.writtenOctave}
@@ -174,7 +168,7 @@ export default function History({
                       <button
                         onClick={() => setTrimId(e.id)}
                         disabled={trimming}
-                        className="px-2 py-1 text-[10px] text-zinc-400 hover:text-amber-400 border border-zinc-700 hover:border-amber-500/50 rounded transition-colors shrink-0"
+                        className="nb-btn bg-card px-2.5 py-1 text-xs shrink-0"
                         title={t("history.trim")}
                       >
                         {t("history.trim")}
@@ -184,7 +178,7 @@ export default function History({
                 )}
 
                 {trimming && trimId === e.id && (
-                  <p className="text-xs text-amber-400 mt-2 animate-pulse">{t("history.trimming")}</p>
+                  <p className="text-xs font-bold mt-2 animate-pulse">{t("history.trimming")}</p>
                 )}
               </div>
             )}

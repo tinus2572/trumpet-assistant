@@ -19,33 +19,38 @@ export default function ChromaticScale({ currentNote }: ChromaticScaleProps) {
     : null;
   const pitchQuality = currentNote ? evaluatePitch(currentNote.centsOffset) : null;
 
+  const cents = currentNote?.centsOffset ?? 0;
+
   return (
-    <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
-      <div className="flex items-center gap-3 mb-3">
-        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-          {t("range.title")}
-        </h2>
-        {currentNote && (
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold" style={{ color: pitchQuality?.color }}>
-              {dn(currentNote.writtenNote)}{currentNote.writtenOctave}
-            </span>
-            <span className="text-xs text-zinc-500">
-              {Math.round(currentNote.frequency)} Hz
-            </span>
-            <span
-              className="text-xs font-medium"
-              style={{ color: pitchQuality?.color }}
-            >
-              {currentNote.centsOffset > 0 ? "+" : ""}
-              {currentNote.centsOffset}¢
-            </span>
-          </div>
-        )}
+    <section className="nb-card p-4">
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <h2 className="nb-label">{t("range.title")}</h2>
+        <div className="flex items-center gap-2 h-9">
+          {currentNote ? (
+            <>
+              <span
+                className="min-w-14 text-center font-display text-lg px-2 py-0.5 border-2 border-ink rounded-nb shadow-nb-sm"
+                style={{ backgroundColor: pitchQuality?.color }}
+              >
+                {dn(currentNote.writtenNote)}
+                <span className="text-sm">{currentNote.writtenOctave}</span>
+              </span>
+              <span className="text-xs font-mono font-bold tabular-nums">
+                {Math.round(currentNote.frequency)} Hz
+              </span>
+              <span className="text-xs font-mono font-bold tabular-nums px-1.5 py-0.5 border-2 border-ink rounded-md bg-card">
+                {cents > 0 ? "+" : ""}
+                {cents}¢
+              </span>
+            </>
+          ) : (
+            <span className="text-xs font-semibold text-ink/50">—</span>
+          )}
+        </div>
       </div>
 
       {/* Chromatic scale */}
-      <div className="relative flex gap-px">
+      <div className="relative flex gap-0.5">
         {SCALE.map((n, i) => {
           const clef = `${n.name}${n.octave}`;
           const active = clef === activeKey;
@@ -56,103 +61,87 @@ export default function ChromaticScale({ currentNote }: ChromaticScaleProps) {
           return (
             <div
               key={i}
-              className="flex-1 flex flex-col items-center gap-1 relative"
+              className="flex-1 min-w-0 flex flex-col items-center gap-1 relative"
               onMouseEnter={() => setHover(i)}
               onMouseLeave={() => setHover(null)}
             >
               {/* Hover tooltip */}
               {hovered && !active && (
                 <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-                  <div className="bg-zinc-800 border border-zinc-600 rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-xl">
-                    <p className="text-xs font-bold text-amber-400">
-                      {dn(n.name)}<span className="text-[10px] text-zinc-400">{n.octave}</span>
+                  <div className="nb-card px-2.5 py-1.5 whitespace-nowrap">
+                    <p className="font-display text-sm">
+                      {dn(n.name)}
+                      <span className="text-[10px]">{n.octave}</span>
                     </p>
-                    <div className="flex items-center gap-1.5 mt-1">
+                    <div className="flex items-center gap-1 mt-1">
                       {n.pistons.map((pressed, pi) => (
                         <div
                           key={pi}
-                          className={`w-3.5 h-5 rounded-sm border text-[8px] flex items-center justify-center font-bold ${
-                            pressed
-                              ? "border-amber-400 bg-amber-500/30 text-amber-400"
-                              : "border-zinc-600 bg-zinc-800 text-zinc-600"
+                          className={`w-4 h-5 rounded-sm border-2 border-ink text-[9px] flex items-center justify-center font-bold ${
+                            pressed ? "bg-sun" : "bg-card text-ink/30"
                           }`}
                         >
                           {pi + 1}
                         </div>
                       ))}
-                      <span className="text-[10px] text-zinc-400 ml-0.5">{n.fingeringLabel}</span>
+                      <span className="text-[10px] font-semibold ml-1">{n.fingeringLabel}</span>
                     </div>
                   </div>
-                  <div className="w-2 h-2 bg-zinc-800 border-b border-r border-zinc-600 rotate-45 absolute left-1/2 -translate-x-1/2 -bottom-1" />
                 </div>
               )}
 
-              {/* Note bar */}
+              {/* Key: naturals are tall and white, sharps short and black, like a keyboard */}
               <div
-                className={`w-full rounded-sm transition-all duration-100 cursor-pointer ${
-                  n.natural ? "h-10" : "h-7"
+                className={`w-full border-2 border-ink rounded-b-md transition-all duration-100 cursor-pointer ${
+                  n.natural ? "h-11" : "h-7"
                 } ${
                   active
-                    ? "shadow-lg"
+                    ? "translate-y-0.5"
                     : hovered
-                    ? "bg-amber-500/30"
+                    ? "bg-sun"
                     : n.natural
-                    ? "bg-zinc-700/60"
-                    : "bg-zinc-800/80"
+                    ? "bg-card"
+                    : "bg-ink"
                 }`}
-                style={
-                  active
-                    ? {
-                        backgroundColor: pitchQuality?.color,
-                        boxShadow: `0 0 12px ${pitchQuality?.color}60`,
-                      }
-                    : undefined
-                }
+                style={active ? { backgroundColor: pitchQuality?.color } : undefined}
               />
               {/* Label */}
               <span
-                className={`text-center leading-none transition-colors ${
-                  active
-                    ? "font-bold text-xs"
-                    : hovered
-                    ? "font-medium text-[10px] text-amber-400"
+                className={`text-center leading-none truncate max-w-full ${
+                  active || hovered
+                    ? "font-bold text-[11px]"
                     : n.natural
-                    ? "text-zinc-600 text-[9px]"
+                    ? `text-[9px] ${isC ? "font-bold" : "font-medium text-ink/50"}`
                     : "text-transparent text-[9px]"
-                } ${!active && !hovered && isC ? "text-zinc-400" : ""}`}
-                style={active ? { color: pitchQuality?.color } : undefined}
+                }`}
               >
                 {showLabel ? dn(n.name) : "·"}
-                {(isC || active || hovered || i === 0) && (
-                  <span className="text-[8px]">{n.octave}</span>
-                )}
+                {(isC || active || hovered || i === 0) && <span className="text-[8px]">{n.octave}</span>}
               </span>
             </div>
           );
         })}
       </div>
 
-      {/* Fine pitch indicator below active note */}
-      {currentNote && activeKey && (
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-[10px] text-zinc-600 w-8 text-right">&#9837;</span>
-          <div className="flex-1 relative h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-            <div className="absolute inset-0 flex">
-              <div className="flex-1 bg-gradient-to-r from-red-500/20 via-green-500/20 to-transparent" />
-              <div className="flex-1 bg-gradient-to-r from-transparent via-green-500/20 to-red-500/20" />
-            </div>
+      {/* Tuner: always shown so the layout doesn't jump */}
+      <div className="mt-3 flex items-center gap-2">
+        <span className="text-sm font-bold w-5 text-right">&#9837;</span>
+        <div className="flex-1 relative h-4 border-2 border-ink rounded-full bg-card overflow-hidden">
+          {/* In-tune zone */}
+          <div className="absolute inset-y-0 left-[45%] w-[10%] bg-mint" />
+          <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-ink" />
+          {currentNote && (
             <div
-              className="absolute top-0 h-full w-1 rounded-full transition-all duration-100"
+              className="absolute top-1/2 h-5 w-2.5 -translate-x-1/2 -translate-y-1/2 border-2 border-ink rounded-sm transition-all duration-100"
               style={{
-                left: `${Math.max(0, Math.min(100, 50 + currentNote.centsOffset))}%`,
+                left: `${Math.max(3, Math.min(97, 50 + cents))}%`,
                 backgroundColor: pitchQuality?.color,
-                boxShadow: `0 0 4px ${pitchQuality?.color}`,
               }}
             />
-          </div>
-          <span className="text-[10px] text-zinc-600 w-8">&#9839;</span>
+          )}
         </div>
-      )}
-    </div>
+        <span className="text-sm font-bold w-5">&#9839;</span>
+      </div>
+    </section>
   );
 }

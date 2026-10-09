@@ -424,13 +424,19 @@ export default function TrumpetAnalyzer() {
   const selectedScore = SCORES.find((s) => s.id === selectedScoreId) ?? null;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="min-h-screen text-ink">
+      {/* Bottom padding keeps content scrollable past the floating metronome */}
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-28">
         {/* Header */}
         <header className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-amber-400">{t("app.title")}</h1>
-            <p className="text-sm text-zinc-500">{t("app.subtitle")}</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="shrink-0 w-12 h-12 grid place-items-center bg-sun border-2 border-ink rounded-nb shadow-nb text-2xl -rotate-3">
+              🎺
+            </div>
+            <div className="min-w-0">
+              <h1 className="font-display text-2xl sm:text-3xl leading-none">{t("app.title")}</h1>
+              <p className="text-sm font-medium text-ink/60 mt-1">{t("app.subtitle")}</p>
+            </div>
           </div>
           <div className="shrink-0">
             <LangSwitch />
@@ -438,22 +444,22 @@ export default function TrumpetAnalyzer() {
         </header>
 
         {micState === "error" && (
-          <div className="bg-red-900/30 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-4 flex items-center justify-between gap-4">
+          <div className="nb-card bg-tomato px-4 py-3 mb-5 flex items-center justify-between gap-4 font-semibold">
             <span>{t("mic.error")}</span>
             <button
               onClick={() => {
                 setMicState("starting");
                 setMicAttempt((n) => n + 1);
               }}
-              className="px-3 py-1 text-sm bg-red-800/60 hover:bg-red-700/60 rounded transition-colors"
+              className="nb-btn bg-card px-3 py-1 text-sm"
             >
               {t("mic.retry")}
             </button>
           </div>
         )}
         {micState === "suspended" && (
-          <div className="bg-amber-500/10 border border-amber-500/40 text-amber-300 px-4 py-3 rounded-lg mb-4 text-sm">
-            {t("mic.clickToStart")}
+          <div className="nb-card bg-sun px-4 py-3 mb-5 text-sm font-semibold">
+            👆 {t("mic.clickToStart")}
           </div>
         )}
 
@@ -467,14 +473,16 @@ export default function TrumpetAnalyzer() {
             onFoldedChange={setLibraryFolded}
           />
 
-          <main className="flex-1 min-w-0 space-y-4">
+          <main className="flex-1 min-w-0 space-y-5">
             {/* Mic status + recording */}
             <div className="flex items-center justify-between gap-4">
-              <span className="inline-flex items-center gap-2 text-xs text-zinc-400">
+              <span
+                className={`inline-flex items-center gap-2 px-3 py-1 text-xs font-bold border-2 border-ink rounded-full shadow-nb-sm ${
+                  micReady ? "bg-mint" : micState === "error" ? "bg-tomato" : "bg-card"
+                }`}
+              >
                 <span
-                  className={`w-2 h-2 rounded-full ${
-                    micReady ? "bg-green-500 animate-pulse" : micState === "error" ? "bg-red-500" : "bg-zinc-600"
-                  }`}
+                  className={`w-2 h-2 rounded-full bg-ink ${micReady ? "animate-pulse" : "opacity-40"}`}
                 />
                 {micReady ? t("mic.listening") : micState === "error" ? t("tiles.micHint") : t("mic.starting")}
               </span>
@@ -482,17 +490,14 @@ export default function TrumpetAnalyzer() {
                 <button
                   onClick={startRecording}
                   disabled={!micReady}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                  className="nb-btn bg-tomato px-4 py-2 text-sm"
                 >
-                  <span className="w-2.5 h-2.5 rounded-full bg-white" />
+                  <span className="w-3 h-3 rounded-full bg-ink" />
                   {t("rec.start")}
                 </button>
               ) : (
-                <button
-                  onClick={stopRecording}
-                  className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white text-sm font-bold rounded-lg transition-colors animate-pulse flex items-center gap-2"
-                >
-                  <span className="w-2.5 h-2.5 rounded-sm bg-white" />
+                <button onClick={stopRecording} className="nb-btn bg-ink text-card px-4 py-2 text-sm">
+                  <span className="w-3 h-3 rounded-sm bg-tomato animate-pulse" />
                   {t("rec.stop")}
                 </button>
               )}
@@ -524,22 +529,18 @@ export default function TrumpetAnalyzer() {
                 liveNote={currentNote}
               />
             ) : (
-              <div className="bg-zinc-900/50 rounded-xl border border-dashed border-zinc-800 px-6 py-10 text-center text-sm text-zinc-500">
-                {t("scores.empty")}
+              <div className="border-2 border-dashed border-ink rounded-nb bg-card/60 px-6 py-12 text-center">
+                <p className="font-display text-lg">🎼</p>
+                <p className="mt-2 font-semibold">{t("scores.empty")}</p>
               </div>
             )}
 
             {/* History */}
-            <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+            <section className="nb-card p-5">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-                  {t("history.title")}
-                </h2>
+                <h2 className="nb-label">{t("history.title")}</h2>
                 {history.length > 0 && (
-                  <button
-                    onClick={clearHistory}
-                    className="text-xs text-zinc-600 hover:text-red-400 transition-colors"
-                  >
+                  <button onClick={clearHistory} className="nb-btn bg-card px-2.5 py-1 text-xs">
                     {t("history.clearAll")}
                   </button>
                 )}
@@ -557,7 +558,7 @@ export default function TrumpetAnalyzer() {
                 onPlaybackTime={setPlaybackTime}
                 replayNoteIndex={replayNoteIndex}
               />
-            </div>
+            </section>
           </main>
         </div>
       </div>

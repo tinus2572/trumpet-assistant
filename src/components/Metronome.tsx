@@ -71,14 +71,14 @@ export default function Metronome() {
   return (
     <div className="fixed bottom-4 right-4 z-50">
       <div
-        className={`bg-zinc-900 border rounded-xl shadow-2xl px-4 py-3 flex items-center gap-3 transition-colors ${
-          beat ? "border-amber-500" : "border-zinc-700"
+        className={`nb-card px-3 py-2.5 flex items-center gap-3 transition-colors ${
+          beat ? "bg-sun" : "bg-card"
         }`}
       >
         {/* Beat indicator */}
         <div
-          className={`w-3 h-3 rounded-full shrink-0 transition-colors ${
-            beat ? "bg-amber-400" : playing ? "bg-zinc-600" : "bg-zinc-700"
+          className={`w-3.5 h-3.5 rounded-full border-2 border-ink shrink-0 transition-colors ${
+            beat ? "bg-ink" : "bg-card"
           }`}
         />
 
@@ -90,21 +90,17 @@ export default function Metronome() {
             max="220"
             value={bpm}
             onChange={(e) => setBpm(Number(e.target.value))}
-            className="w-20 accent-amber-500"
+            className="nb-range w-24"
           />
-          <span className="text-xs text-zinc-300 font-mono w-12 text-right">
-            {bpm} <span className="text-zinc-500">bpm</span>
+          <span className="text-xs font-mono font-bold w-14 text-right tabular-nums">
+            {bpm} <span className="font-normal text-ink/60">bpm</span>
           </span>
         </div>
 
         {/* On/Off button */}
         <button
           onClick={playing ? stop : start}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-            playing
-              ? "bg-amber-500 text-zinc-900 hover:bg-amber-400"
-              : "bg-zinc-800 text-zinc-300 border border-zinc-700 hover:border-amber-500/50"
-          }`}
+          className={`nb-btn px-3 py-1.5 text-xs ${playing ? "bg-ink text-card" : "bg-sky"}`}
         >
           {playing ? t("metronome.stop") : t("metronome.start")}
         </button>

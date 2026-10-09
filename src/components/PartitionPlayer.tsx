@@ -207,176 +207,150 @@ export default function ScorePlayer({
     : null;
   const duration = scoreDuration(transposedScore);
 
+  const segment = (active: boolean, first: boolean) =>
+    `px-2.5 py-1.5 text-xs font-bold transition-colors ${first ? "" : "border-l-2 border-ink"} ${
+      active ? "bg-sun" : "bg-card hover:bg-muted"
+    }`;
+
   return (
-    <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
-        <div className="space-y-4">
-          {/* Score info */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1.5">
-              <h3 className="text-lg font-semibold text-amber-400">{score.title}</h3>
-              <div className="flex items-center gap-1.5 flex-wrap text-xs text-zinc-500">
-                {score.tags.map((tag) => (
-                  <TagPill key={tag} tag={tag} />
-                ))}
-                <span>
-                  {score.composer && <>{score.composer} · </>}
-                  {score.tempo} BPM · {Math.round(duration)}s · {score.notes.length} {t("note.plural")}
-                </span>
-              </div>
-              <DifficultyPicker
-                value={difficulty}
-                overridden={difficultyOverridden}
-                onChange={onDifficultyChange}
-              />
-            </div>
-            <button
-              onClick={() => {
-                stop();
-                cancelCountdown();
-                onClose();
-              }}
-              title={t("scores.close")}
-              className="text-zinc-500 hover:text-zinc-200 transition-colors text-lg leading-none px-1"
-            >
-              ×
-            </button>
+    <section className="nb-card overflow-hidden">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 px-5 py-4 bg-sky border-b-2 border-ink">
+        <div className="min-w-0 space-y-1.5">
+          <h3 className="font-display text-xl sm:text-2xl leading-tight">{score.title}</h3>
+          <div className="flex items-center gap-1.5 flex-wrap text-xs font-semibold">
+            {score.tags.map((tag) => (
+              <TagPill key={tag} tag={tag} />
+            ))}
+            <span>
+              {score.composer && <>{score.composer} · </>}
+              {score.tempo} BPM · {Math.round(duration)}s · {score.notes.length} {t("note.plural")}
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            stop();
+            cancelCountdown();
+            onClose();
+          }}
+          title={t("scores.close")}
+          className="nb-btn bg-card w-9 h-9 shrink-0 text-lg leading-none"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="p-5 space-y-4">
+        {/* Toolbar: view, transposition, difficulty */}
+        <div className="flex items-center gap-x-4 gap-y-3 flex-wrap">
+          <div className="inline-flex border-2 border-ink rounded-nb overflow-hidden shadow-nb-sm">
+            {(["sheet", "tiles"] as const).map((v, i) => (
+              <button key={v} onClick={() => onViewChange(v)} className={segment(view === v, i === 0)}>
+                {v === "sheet" ? `🎼 ${t("scores.viewSheet")}` : `🟨 ${t("scores.viewTiles")}`}
+              </button>
+            ))}
           </div>
 
-          {/* Transpose */}
-          <div className="flex items-center gap-2">
+          <div className="inline-flex border-2 border-ink rounded-nb overflow-hidden shadow-nb-sm">
             <button
               onClick={() => setTransposeIdx((i) => Math.max(0, i - 1))}
               disabled={transposeIdx === 0}
-              className="px-2 py-1 text-sm rounded border border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className={`${segment(false, true)} disabled:opacity-30 disabled:cursor-not-allowed`}
             >
               ▼
             </button>
-            <div className="flex gap-1">
-              {TRANSPOSE_STEPS.map((step, i) => (
-                <button
-                  key={i}
-                  onClick={() => { stop(); setTransposeIdx(i); }}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    i === transposeIdx
-                      ? "bg-amber-500 text-zinc-900 font-bold"
-                      : "bg-zinc-800 text-zinc-500 border border-zinc-700 hover:text-zinc-300"
-                  }`}
-                >
-                  {step.label}
-                </button>
-              ))}
-            </div>
+            {TRANSPOSE_STEPS.map((step, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  stop();
+                  setTransposeIdx(i);
+                }}
+                className={segment(i === transposeIdx, false)}
+              >
+                {step.label}
+              </button>
+            ))}
             <button
               onClick={() => setTransposeIdx((i) => Math.min(TRANSPOSE_STEPS.length - 1, i + 1))}
               disabled={transposeIdx === TRANSPOSE_STEPS.length - 1}
-              className="px-2 py-1 text-sm rounded border border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className={`${segment(false, false)} disabled:opacity-30 disabled:cursor-not-allowed`}
             >
               ▲
             </button>
           </div>
 
-          {/* View switch */}
-          <div className="inline-flex rounded-lg border border-zinc-700 overflow-hidden text-xs">
-            {(["sheet", "tiles"] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => onViewChange(v)}
-                className={`px-3 py-1.5 transition-colors ${
-                  view === v
-                    ? "bg-amber-500 text-zinc-900 font-bold"
-                    : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                {v === "sheet" ? t("scores.viewSheet") : t("scores.viewTiles")}
-              </button>
-            ))}
-          </div>
+          <DifficultyPicker value={difficulty} overridden={difficultyOverridden} onChange={onDifficultyChange} />
+        </div>
 
-          {view === "sheet" ? (
-            <Staff
-              notes={notesStaff}
-              noteActiveIndex={noteActiveIdx}
-              mode={playing ? "replay" : "live"}
-              score={transposedScore}
-              highlight={staffHighlight}
-            />
+        {view === "sheet" ? (
+          <Staff
+            notes={notesStaff}
+            noteActiveIndex={noteActiveIdx}
+            mode={playing ? "replay" : "live"}
+            score={transposedScore}
+            highlight={staffHighlight}
+          />
+        ) : (
+          <TileView score={transposedScore} origin={tileOrigin} liveNote={liveNote} micActive={micReady} />
+        )}
+
+        {/* Transport */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {!playing && countdown === null ? (
+            <>
+              <button onClick={play} className="nb-btn bg-sun px-5 py-2.5 text-sm">
+                ▶ {t("scores.listen")}
+              </button>
+              <button
+                onClick={playWithCountdown}
+                className="nb-btn bg-pink px-4 py-2.5 text-sm"
+                title={t("scores.listenCountdown")}
+              >
+                3… 2… 1…
+              </button>
+            </>
+          ) : countdown !== null ? (
+            <button
+              onClick={cancelCountdown}
+              className="nb-btn bg-pink px-5 py-1 text-2xl font-display min-w-20 animate-pulse"
+            >
+              {countdown}
+            </button>
           ) : (
-            <TileView
-              score={transposedScore}
-              origin={tileOrigin}
-              liveNote={liveNote}
-              micActive={micReady}
-            />
+            <button onClick={stop} className="nb-btn bg-ink text-card px-5 py-2.5 text-sm">
+              ■ {t("scores.stop")}
+            </button>
           )}
 
-          {/* Playback controls */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {!playing && countdown === null ? (
-              <>
-                <button
-                  onClick={play}
-                  className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-lg transition-colors text-sm"
-                >
-                  {t("scores.listen")}
-                </button>
-                <button
-                  onClick={playWithCountdown}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium rounded-lg transition-colors text-sm border border-zinc-700"
-                  title={t("scores.listenCountdown")}
-                >
-                  3… 2… 1…
-                </button>
-              </>
-            ) : countdown !== null ? (
-              <button
-                onClick={cancelCountdown}
-                className="px-5 py-2 bg-amber-500 text-zinc-900 font-bold rounded-lg text-2xl min-w-[80px] animate-pulse"
-              >
-                {countdown}
-              </button>
-            ) : (
-              <button
-                onClick={stop}
-                className="px-5 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-100 font-bold rounded-lg transition-colors text-sm"
-              >
-                {t("scores.stop")}
-              </button>
+          <div className="flex items-center gap-2.5 ml-auto">
+            <button
+              onClick={() => setMuted(!muted)}
+              className={`nb-btn px-3 py-1.5 text-xs ${muted ? "bg-tomato" : "bg-card"}`}
+              title={muted ? t("scores.muted") : t("scores.sound")}
+            >
+              {muted ? `🔇 ${t("scores.muted")}` : `🔊 ${t("scores.sound")}`}
+            </button>
+            {!muted && (
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={Math.round(volume * 100)}
+                onChange={(e) => setVolume(Number(e.target.value) / 100)}
+                className="nb-range w-24"
+              />
             )}
-
-            {/* Volume */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setMuted(!muted)}
-                className={`text-sm px-2 py-1 rounded ${
-                  muted
-                    ? "bg-red-900/30 text-red-400 border border-red-800"
-                    : "bg-zinc-800 text-zinc-400 border border-zinc-700"
-                }`}
-                title={muted ? t("scores.muted") : t("scores.sound")}
-              >
-                {muted ? t("scores.muted") : t("scores.sound")}
-              </button>
-              {!muted && (
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={Math.round(volume * 100)}
-                  onChange={(e) => setVolume(Number(e.target.value) / 100)}
-                  className="w-20 accent-amber-500"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Instructions */}
-          <div className="text-xs text-zinc-600 bg-zinc-800/50 rounded-lg px-3 py-2">
-            <p>
-              <strong className="text-zinc-500">{t("scores.howTo")}</strong>{" "}
-              {view === "tiles" ? t("tiles.instructions") : t("scores.instructions")}
-            </p>
           </div>
         </div>
-    </div>
+
+        {/* Instructions */}
+        <p className="text-xs font-medium bg-paper border-2 border-dashed border-ink rounded-nb px-3 py-2">
+          <strong>💡 {t("scores.howTo")}</strong>{" "}
+          {view === "tiles" ? t("tiles.instructions") : t("scores.instructions")}
+        </p>
+      </div>
+    </section>
   );
 }

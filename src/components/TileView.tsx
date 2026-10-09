@@ -22,23 +22,18 @@ const HIT_TOLERANCE = 0.15;
 const POPUP_LIFE = 0.9; // seconds
 const SPARK_LIFE = 0.5;
 
+// Neobrutalist palette (matches the theme tokens in globals.css)
 const COLORS = {
-  bgTop: "#07070a",
-  bgBottom: "#15151c",
-  lane: "rgba(255,255,255,0.025)",
-  laneEdge: "rgba(255,255,255,0.04)",
-  octaveEdge: "rgba(255,255,255,0.1)",
-  measure: "rgba(255,255,255,0.08)",
-  hit: "#22c55e",
-  good: "#eab308",
-  miss: "#ef4444",
-  accent: "#f59e0b",
-  text: "#fafafa",
-  textDim: "#a1a1aa",
-  textFaint: "#52525b",
-  pill: "rgba(9,9,11,0.7)",
-  padNatural: ["#52525b", "#3f3f46"],
-  padSharp: ["#27272a", "#1c1c21"],
+  ink: "#121212",
+  paper: "#fff6e5",
+  card: "#ffffff",
+  muted: "#f3ead6",
+  sun: "#ffd23f",
+  mint: "#7ee2a8",
+  tomato: "#ff6b57",
+  laneEdge: "rgba(18,18,18,0.12)",
+  octaveEdge: "rgba(18,18,18,0.45)",
+  measure: "rgba(18,18,18,0.3)",
 };
 
 /** One hue per pitch class, so each note keeps its color across octaves */
@@ -53,7 +48,7 @@ function drawValves(
   top: number,
   maxWidth: number,
   pistons: [boolean, boolean, boolean],
-  onLight: boolean
+  onDark: boolean
 ) {
   const gap = Math.max(1.5, Math.min(3, maxWidth * 0.06));
   const vw = Math.max(3, Math.min(8, (maxWidth - 2 * gap) / 3));
@@ -64,21 +59,57 @@ function drawValves(
   pistons.forEach((pressed, i) => {
     const x = x0 + i * (vw + gap);
     // Casing
-    ctx.fillStyle = onLight ? "rgba(0,0,0,0.18)" : "rgba(0,0,0,0.35)";
+    ctx.fillStyle = onDark ? "rgba(255,255,255,0.18)" : "rgba(18,18,18,0.1)";
     ctx.beginPath();
     ctx.roundRect(x, top, vw, vh, Math.min(2, vw / 3));
     ctx.fill();
     // Stem and cap
     const capY = top + (pressed ? travel : 0);
-    const color = pressed
-      ? onLight ? "#09090b" : COLORS.accent
-      : onLight ? "rgba(0,0,0,0.35)" : "#71717a";
-    ctx.fillStyle = color;
+    ctx.fillStyle = pressed
+      ? onDark ? COLORS.sun : COLORS.ink
+      : onDark ? "rgba(255,255,255,0.5)" : "rgba(18,18,18,0.3)";
     ctx.fillRect(x + vw / 2 - Math.max(0.75, vw * 0.12), capY + capH, Math.max(1.5, vw * 0.24), vh - (capY - top) - capH);
     ctx.beginPath();
     ctx.roundRect(x, capY, vw, capH, [capH / 2, capH / 2, 1, 1]);
     ctx.fill();
   });
+}
+
+/** Flat box with ink border and hard offset shadow (pressed = no shadow, shifted) */
+function drawBox(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  fill: string,
+  { radius = 6, shadow = 3, pressed = false, border = 2 } = {}
+) {
+  const r = Math.max(0, Math.min(radius, w / 2, h / 2));
+  if (!pressed && shadow > 0) {
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.roundRect(x + shadow, y + shadow, w, h, r);
+    ctx.fill();
+  }
+  const ox = pressed ? shadow : 0;
+  ctx.fillStyle = fill;
+  ctx.beginPath();
+  ctx.roundRect(x + ox, y + ox, w, h, r);
+  ctx.fill();
+  ctx.lineWidth = border;
+  ctx.strokeStyle = COLORS.ink;
+  ctx.stroke();
+}
+
+/** Text filled with a color and outlined in ink, sticker style */
+function stickerText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, fill: string, outline: number) {
+  ctx.lineJoin = "round";
+  ctx.lineWidth = outline;
+  ctx.strokeStyle = COLORS.ink;
+  ctx.strokeText(text, x, y);
+  ctx.fillStyle = fill;
+  ctx.fillText(text, x, y);
 }
 
 interface TimedNote {
@@ -161,8 +192,13 @@ export default function TileView({ score, origin, liveNote, micActive }: TileVie
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const font = getComputedStyle(wrapper).fontFamily || "system-ui, sans-serif";
+    const displayFont =
+      getComputedStyle(document.documentElement).getPropertyValue("--font-archivo-black").trim() || font;
     const setFont = (size: number, weight = 400) => {
       ctx.font = `${weight} ${size}px ${font}`;
+    };
+    const setDisplayFont = (size: number) => {
+      ctx.font = `400 ${size}px ${displayFont}`;
     };
 
     let width = 0;
@@ -192,18 +228,15 @@ export default function TileView({ score, origin, liveNote, micActive }: TileVie
     let lastNow: number | null = null;
     let raf = 0;
 
-    const pill = (x: number, y: number, text: string, color: string, align: "left" | "right") => {
-      setFont(12, 600);
-      const w = ctx.measureText(text).width + 20;
-      const px = align === "left" ? x : x - w;
-      ctx.fillStyle = COLORS.pill;
-      ctx.beginPath();
-      ctx.roundRect(px, y, w, 24, 12);
-      ctx.fill();
-      ctx.fillStyle = color;
+    const pill = (x: number, y: number, text: string, fill: string, align: "left" | "right") => {
+      setFont(12, 700);
+      const w = ctx.measureText(text).width + 22;
+      const px = align === "left" ? x : x - w - 2;
+      drawBox(ctx, px, y, w, 26, fill, { radius: 13, shadow: 2 });
+      ctx.fillStyle = COLORS.ink;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(text, px + w / 2, y + 12.5);
+      ctx.fillText(text, px + w / 2, y + 13.5);
     };
 
     const draw = (nowMs: number) => {
@@ -237,9 +270,9 @@ export default function TileView({ score, origin, liveNote, micActive }: TileVie
           judged[i] = 1;
           const ratio = hitSec[i] / (n.end - n.start);
           const [text, color] =
-            ratio >= 0.8 ? [t("tiles.perfect"), COLORS.hit]
-            : ratio >= 0.5 ? [t("tiles.good"), COLORS.good]
-            : [t("tiles.miss"), COLORS.miss];
+            ratio >= 0.8 ? [t("tiles.perfect"), COLORS.mint]
+            : ratio >= 0.5 ? [t("tiles.good"), COLORS.sun]
+            : [t("tiles.miss"), COLORS.tomato];
           if (ratio >= 0.5) {
             goodNotes++;
             combo++;
@@ -252,77 +285,65 @@ export default function TileView({ score, origin, liveNote, micActive }: TileVie
       });
       const hitting = running && !finished && liveMidi !== null && targets.has(liveMidi);
 
-      // Background and lanes
-      const bg = ctx.createLinearGradient(0, 0, 0, hitY);
-      bg.addColorStop(0, COLORS.bgTop);
-      bg.addColorStop(1, COLORS.bgBottom);
-      ctx.fillStyle = bg;
+      // Background and lanes: white naturals, tinted sharps
+      ctx.fillStyle = COLORS.paper;
       ctx.fillRect(0, 0, width, HEIGHT);
       keys.forEach((k, i) => {
         const x = i * colW;
-        if (k.natural) {
-          ctx.fillStyle = COLORS.lane;
-          ctx.fillRect(x, 0, colW, hitY);
-        }
-        ctx.fillStyle = k.name === "C" ? COLORS.octaveEdge : COLORS.laneEdge;
-        ctx.fillRect(Math.round(x), 0, 1, hitY);
+        ctx.fillStyle = k.natural ? COLORS.card : COLORS.muted;
+        ctx.fillRect(x, 0, colW, hitY);
+        const edge = k.name === "C" && i > 0;
+        ctx.fillStyle = edge ? COLORS.octaveEdge : COLORS.laneEdge;
+        ctx.fillRect(Math.round(x) - (edge ? 1 : 0), 0, edge ? 2 : 1, hitY);
       });
 
-      // Lane beams under the notes due now
+      // Lanes of the notes due now are tinted with their note color
       for (const midi of targets) {
-        const hue = noteHue(midi);
-        const on = liveMidi === midi;
-        const beam = ctx.createLinearGradient(0, hitY, 0, hitY * 0.35);
-        beam.addColorStop(0, `hsla(${hue},85%,60%,${on ? 0.45 : 0.18})`);
-        beam.addColorStop(1, `hsla(${hue},85%,60%,0)`);
-        ctx.fillStyle = beam;
+        ctx.fillStyle = `hsla(${noteHue(midi)},90%,65%,${liveMidi === midi ? 0.45 : 0.2})`;
         ctx.fillRect(laneX(midi), 0, colW, hitY);
       }
 
-      // Measure lines
-      ctx.fillStyle = COLORS.measure;
+      // Measure lines (dashed)
+      ctx.strokeStyle = COLORS.measure;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
       for (const m of measureTimes) {
-        const y = hitY - (m - time) * pxPerSec;
-        if (y > 0 && y < hitY) ctx.fillRect(0, Math.round(y), width, 1);
-      }
-
-      // Falling tiles, consumed as they cross the hit line
-      notes.forEach((n) => {
-        const bottom = Math.min(hitY, hitY - (n.start - time) * pxPerSec - 1.5);
-        const top = hitY - (n.end - time) * pxPerSec + 1.5;
-        if (bottom <= top || bottom < 0 || top > hitY) return;
-        const key = keys[n.midi - low];
-        const hue = noteHue(n.midi);
-        const x = laneX(n.midi) + 2;
-        const w = colW - 4;
-        const h = bottom - top;
-        const lit = time >= n.start && time < n.end && liveMidi === n.midi;
-        const light = key.natural ? 58 : 48;
-
-        const grad = ctx.createLinearGradient(0, top, 0, bottom);
-        grad.addColorStop(0, `hsl(${hue},80%,${light + 10}%)`);
-        grad.addColorStop(1, `hsl(${hue},85%,${light - 6}%)`);
-        ctx.shadowColor = lit ? "rgba(255,255,255,0.8)" : `hsla(${hue},90%,55%,0.55)`;
-        ctx.shadowBlur = lit ? 18 : 10;
-        ctx.fillStyle = lit ? `hsl(${hue},90%,72%)` : grad;
+        const y = Math.round(hitY - (m - time) * pxPerSec) + 0.5;
+        if (y <= 0 || y >= hitY) continue;
         ctx.beginPath();
-        ctx.roundRect(x, top, w, h, Math.min(6, w / 3, h / 2));
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
 
-        // Gloss on the left edge
-        ctx.fillStyle = "rgba(255,255,255,0.22)";
-        ctx.fillRect(x + 2, top + 3, 2, Math.max(0, h - 6));
+      // Falling tiles, consumed as they cross the hit line; a tile being played well "presses down"
+      notes.forEach((n) => {
+        const bottom = Math.min(hitY - 3, hitY - (n.start - time) * pxPerSec - 2);
+        const top = hitY - (n.end - time) * pxPerSec + 2;
+        if (bottom <= top + 1 || bottom < 0 || top > hitY) return;
+        const key = keys[n.midi - low];
+        const lit = time >= n.start && time < n.end && liveMidi === n.midi;
+        const pad = Math.min(4, colW * 0.12);
+        drawBox(
+          ctx,
+          laneX(n.midi) + pad,
+          top,
+          colW - 2 * pad - 3,
+          bottom - top,
+          `hsl(${noteHue(n.midi)},85%,${key.natural ? 66 : 58}%)`,
+          { radius: 6, shadow: 3, pressed: lit }
+        );
       });
 
-      // Sparks while the right note is held
+      // Confetti while the right note is held
       if (hitting && liveMidi !== null) {
-        for (let s = 0; s < 3; s++) {
+        for (let s = 0; s < 2; s++) {
           sparks.push({
             x: laneX(liveMidi) + Math.random() * colW,
-            y: hitY,
-            vx: (Math.random() - 0.5) * 90,
-            vy: -60 - Math.random() * 140,
+            y: hitY - 4,
+            vx: (Math.random() - 0.5) * 110,
+            vy: -80 - Math.random() * 150,
             hue: noteHue(liveMidi),
             born: now,
           });
@@ -337,63 +358,51 @@ export default function TileView({ score, origin, liveNote, micActive }: TileVie
         }
         sp.x += sp.vx * frameDt;
         sp.y += sp.vy * frameDt;
-        sp.vy += 260 * frameDt;
-        ctx.fillStyle = `hsla(${sp.hue},95%,75%,${1 - age / SPARK_LIFE})`;
-        ctx.fillRect(sp.x - 1, sp.y - 1, 2.5, 2.5);
+        sp.vy += 300 * frameDt;
+        const size = 5 * (1 - age / SPARK_LIFE) + 2;
+        ctx.fillStyle = `hsl(${sp.hue},90%,62%)`;
+        ctx.fillRect(sp.x, sp.y, size, size);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = COLORS.ink;
+        ctx.strokeRect(sp.x, sp.y, size, size);
       }
 
-      // Hit line
-      const lineColor = hitting ? COLORS.hit : COLORS.accent;
-      const line = ctx.createLinearGradient(0, 0, width, 0);
-      line.addColorStop(0, "rgba(255,255,255,0)");
-      line.addColorStop(0.15, lineColor);
-      line.addColorStop(0.85, lineColor);
-      line.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.shadowColor = lineColor;
-      ctx.shadowBlur = hitting ? 16 : 8;
-      ctx.fillStyle = line;
-      ctx.fillRect(0, hitY - 1.5, width, 3);
-      ctx.shadowBlur = 0;
+      // Hit line: a thick band, mint while the right note is held
+      ctx.fillStyle = hitting ? COLORS.mint : COLORS.sun;
+      ctx.fillRect(0, hitY - 4, width, 8);
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(0, hitY - 5, width, 2);
+      ctx.fillRect(0, hitY + 3, width, 2);
 
-      // Pads: mic note glows in its pitch color, target notes outlined in their tile color
-      ctx.fillStyle = "#0c0c10";
-      ctx.fillRect(0, hitY + 1.5, width, KEY_HEIGHT);
+      // Keys: white naturals, black sharps; due notes in yellow, the mic note in its pitch color
+      ctx.fillStyle = COLORS.paper;
+      ctx.fillRect(0, hitY + 5, width, KEY_HEIGHT);
       keys.forEach((k, i) => {
         const midi = low + i;
-        const x = i * colW + 1.5;
-        const w = colW - 3;
-        const y = hitY + 6;
-        const h = KEY_HEIGHT - 10;
+        const x = i * colW + 2;
+        const w = colW - 6;
+        const y = hitY + 9;
+        const h = KEY_HEIGHT - 15;
         const isLive = midi === liveMidi && live !== null;
         const isTarget = targets.has(midi);
-        if (isLive) {
-          const color = evaluatePitch(live.centsOffset).color;
-          ctx.shadowColor = color;
-          ctx.shadowBlur = 14;
-          ctx.fillStyle = color;
-        } else {
-          const [c1, c2] = k.natural ? COLORS.padNatural : COLORS.padSharp;
-          const pad = ctx.createLinearGradient(0, y, 0, y + h);
-          pad.addColorStop(0, c1);
-          pad.addColorStop(1, c2);
-          ctx.fillStyle = pad;
-        }
-        ctx.beginPath();
-        ctx.roundRect(x, y, w, h, 4);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        if (isTarget) {
-          ctx.strokeStyle = `hsl(${noteHue(midi)},90%,65%)`;
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
+        const fill = isLive
+          ? evaluatePitch(live.centsOffset).color
+          : isTarget
+          ? COLORS.sun
+          : k.natural
+          ? COLORS.card
+          : COLORS.ink;
+        const dark = fill === COLORS.ink;
+        drawBox(ctx, x, y, w, h, fill, { radius: 5, shadow: 2, pressed: isLive });
+        const ox = isLive ? 2 : 0;
+
         // Every note named; octave shown on Do and Sol only
         const withOctave = k.name === "C" || k.name === "G";
         const label = `${dn(k.name)}${withOctave ? k.octave : ""}`;
-        const weight = withOctave || isLive ? 700 : 500;
+        const weight = withOctave || isLive ? 700 : 600;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillStyle = isLive ? "#09090b" : withOctave ? COLORS.text : k.natural ? COLORS.textDim : "#71717a";
+        ctx.fillStyle = dark ? COLORS.card : COLORS.ink;
         let size = Math.max(9, Math.min(12, w * 0.2));
         setFont(size, weight);
         // Shrink to fit narrow columns (e.g. "Sol#" across the full trumpet range)
@@ -401,11 +410,11 @@ export default function TileView({ score, origin, liveNote, micActive }: TileVie
           size -= 0.5;
           setFont(size, weight);
         }
-        ctx.fillText(label, x + w / 2, y + h - 9);
-        drawValves(ctx, x + w / 2, y + 6, w - 4, k.pistons, isLive);
+        ctx.fillText(label, x + ox + w / 2, y + ox + h - 9);
+        drawValves(ctx, x + ox + w / 2, y + ox + 6, w - 4, k.pistons, dark);
       });
 
-      // Judgement pop-ups floating up from the line
+      // Judgement stickers floating up from the line
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       for (let p = popups.length - 1; p >= 0; p--) {
@@ -417,83 +426,76 @@ export default function TileView({ score, origin, liveNote, micActive }: TileVie
         }
         const k = age / POPUP_LIFE;
         ctx.globalAlpha = 1 - k * k;
-        ctx.fillStyle = pop.color;
-        setFont(12 + 4 * Math.min(1, age * 8), 800);
-        const px = Math.min(width - 30, Math.max(30, pop.x));
-        ctx.fillText(pop.text, px, hitY - 22 - k * 40);
+        setDisplayFont(13 + 5 * Math.min(1, age * 8));
+        const px = Math.min(width - 40, Math.max(40, pop.x));
+        stickerText(ctx, pop.text, px, hitY - 26 - k * 40, pop.color, 4);
       }
       ctx.globalAlpha = 1;
 
       // Progress bar
       if (running) {
-        ctx.fillStyle = "rgba(255,255,255,0.06)";
-        ctx.fillRect(0, 0, width, 3);
-        ctx.fillStyle = COLORS.accent;
-        ctx.fillRect(0, 0, width * Math.max(0, Math.min(1, time / totalSec)), 3);
+        ctx.fillStyle = COLORS.card;
+        ctx.fillRect(0, 0, width, 7);
+        ctx.fillStyle = COLORS.sun;
+        ctx.fillRect(0, 0, width * Math.max(0, Math.min(1, time / totalSec)), 7);
+        ctx.fillStyle = COLORS.ink;
+        ctx.fillRect(0, 7, width, 2);
       }
 
       // HUD pills
       const scored = notes.reduce((s, n, i) => (judged[i] ? s + (n.end - n.start) : s), 0);
       const hitTotal = hitSec.reduce((s, h) => s + h, 0);
       if (running && !finished && scored > 0) {
-        pill(10, 12, `${t("tiles.accuracy")} ${Math.round((100 * hitTotal) / scored)}%`, COLORS.text, "left");
-        if (combo >= 2) pill(width - 10, 12, `${t("tiles.combo")} ×${combo}`, COLORS.accent, "right");
+        pill(10, 18, `${t("tiles.accuracy")} ${Math.round((100 * hitTotal) / scored)}%`, COLORS.card, "left");
+        if (combo >= 2) pill(width - 10, 18, `${t("tiles.combo")} ×${combo}`, COLORS.sun, "right");
       }
       if (!micRef.current) {
-        pill(width - 10, running ? 42 : 12, t("tiles.micHint"), COLORS.textDim, "right");
+        pill(width - 10, running ? 52 : 14, t("tiles.micHint"), COLORS.tomato, "right");
       }
 
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       if (!running) {
-        // Idle: pulsing prompt
-        ctx.globalAlpha = 0.55 + 0.35 * Math.sin(now * 3);
-        ctx.fillStyle = COLORS.textDim;
-        setFont(15, 500);
-        ctx.fillText(t("tiles.startHint"), width / 2, hitY / 2);
-        ctx.globalAlpha = 1;
+        // Idle: a card with the prompt, gently bobbing
+        setFont(15, 700);
+        const text = t("tiles.startHint");
+        const w = ctx.measureText(text).width + 36;
+        const bob = Math.sin(now * 2.5) * 3;
+        drawBox(ctx, width / 2 - w / 2, hitY / 2 - 22 + bob, w, 44, COLORS.card, { radius: 10, shadow: 4 });
+        ctx.fillStyle = COLORS.ink;
+        ctx.fillText(text, width / 2, hitY / 2 + bob + 1);
       } else if (time < 0) {
-        // Lead-in: big countdown numbers, each shrinking and fading over its second
+        // Lead-in: big countdown numbers, each shrinking over its second
         const n = Math.ceil(-time);
         const frac = n + time; // 1 → 0 across the second
-        ctx.globalAlpha = Math.min(1, frac * 1.6);
-        ctx.fillStyle = COLORS.accent;
-        ctx.shadowColor = COLORS.accent;
-        ctx.shadowBlur = 24;
-        setFont(64 + 36 * frac, 800);
-        ctx.fillText(String(n), width / 2, hitY / 2);
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1;
+        setDisplayFont(70 + 40 * frac);
+        ctx.fillStyle = COLORS.ink;
+        ctx.fillText(String(n), width / 2 + 5, hitY / 2 + 5);
+        stickerText(ctx, String(n), width / 2, hitY / 2, COLORS.sun, 6);
       } else if (finished) {
         const accuracy = Math.round((100 * hitTotal) / (totalNoteSec || 1));
         const stars = accuracy >= 90 ? 3 : accuracy >= 75 ? 2 : accuracy >= 50 ? 1 : 0;
-        const color = stars >= 2 ? COLORS.hit : stars === 1 ? COLORS.good : COLORS.miss;
+        const color = stars >= 2 ? COLORS.mint : stars === 1 ? COLORS.sun : COLORS.tomato;
         const cy = hitY / 2;
 
-        ctx.fillStyle = "rgba(7,7,10,0.82)";
-        ctx.fillRect(0, 0, width, hitY);
+        ctx.fillStyle = "rgba(255,246,229,0.75)";
+        ctx.fillRect(0, 9, width, hitY - 14);
+        const cw = Math.min(width - 32, 340);
+        drawBox(ctx, width / 2 - cw / 2, cy - 112, cw, 218, COLORS.card, { radius: 12, shadow: 6, border: 3 });
 
-        setFont(26, 400);
+        setDisplayFont(30);
         for (let s = 0; s < 3; s++) {
-          ctx.fillStyle = s < stars ? COLORS.accent : COLORS.textFaint;
-          ctx.fillText("★", width / 2 + (s - 1) * 34, cy - 70);
+          stickerText(ctx, "★", width / 2 + (s - 1) * 40, cy - 72, s < stars ? COLORS.sun : COLORS.muted, 4);
         }
-        setFont(12, 600);
-        ctx.fillStyle = COLORS.textDim;
-        ctx.fillText(t("tiles.accuracy").toUpperCase(), width / 2, cy - 34);
-        ctx.fillStyle = color;
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 20;
-        setFont(56, 800);
-        ctx.fillText(`${accuracy}%`, width / 2, cy + 8);
-        ctx.shadowBlur = 0;
-        setFont(13, 500);
-        ctx.fillStyle = COLORS.textDim;
-        ctx.fillText(
-          `${goodNotes} / ${notes.length} ${t("tiles.notesHit")}  ·  ${t("tiles.bestCombo")} ×${bestCombo}`,
-          width / 2,
-          cy + 52
-        );
+        setFont(12, 700);
+        ctx.fillStyle = COLORS.ink;
+        ctx.fillText(t("tiles.accuracy").toUpperCase(), width / 2, cy - 36);
+        setDisplayFont(54);
+        stickerText(ctx, `${accuracy}%`, width / 2, cy + 8, color, 6);
+        setFont(13, 600);
+        ctx.fillStyle = COLORS.ink;
+        ctx.fillText(`${goodNotes} / ${notes.length} ${t("tiles.notesHit")}`, width / 2, cy + 56);
+        ctx.fillText(`${t("tiles.bestCombo")} ×${bestCombo}`, width / 2, cy + 78);
       }
 
       raf = requestAnimationFrame(draw);
@@ -507,7 +509,7 @@ export default function TileView({ score, origin, liveNote, micActive }: TileVie
   }, [origin, notes, totalSec, measureTimes, columns]);
 
   return (
-    <div className="rounded-xl overflow-hidden ring-1 ring-zinc-800 shadow-[0_0_40px_-12px_rgba(245,158,11,0.25)]">
+    <div className="border-2 border-ink rounded-nb overflow-hidden">
       <div ref={wrapperRef} className="w-full">
         <canvas ref={canvasRef} className="block" />
       </div>

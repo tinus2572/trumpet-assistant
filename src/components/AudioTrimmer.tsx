@@ -68,7 +68,7 @@ export default function AudioTrimmer({ audioUrl, duration, onConfirm, onCancel }
   const trimmedDuration = end - start;
 
   return (
-    <div className="bg-zinc-800 rounded-lg p-3 border border-amber-500/30">
+    <div className="bg-paper rounded-nb p-3 border-2 border-ink">
       <audio
         ref={audioRef}
         src={audioUrl}
@@ -82,27 +82,27 @@ export default function AudioTrimmer({ audioUrl, duration, onConfirm, onCancel }
       />
 
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-amber-400">{t("trim.title")}</span>
-        <span className="text-[10px] text-zinc-400">
+        <span className="nb-label">{t("trim.title")}</span>
+        <span className="text-[11px] font-mono font-bold">
           {formatTime(trimmedDuration)} {t("trim.selected")}{trimmedDuration !== dur ? ` / ${formatTime(dur)}` : ""}
         </span>
       </div>
 
       {/* Visual selection bar */}
-      <div className="relative h-8 bg-zinc-900 rounded mb-2">
+      <div className="relative h-8 bg-card border-2 border-ink rounded-md overflow-hidden mb-3">
         {/* Cut zone left */}
         <div
-          className="absolute inset-y-0 left-0 bg-red-900/30 rounded-l"
+          className="absolute inset-y-0 left-0 bg-ink/25"
           style={{ width: `${startPct}%` }}
         />
         {/* Cut zone right */}
         <div
-          className="absolute inset-y-0 right-0 bg-red-900/30 rounded-r"
+          className="absolute inset-y-0 right-0 bg-ink/25"
           style={{ width: `${100 - endPct}%` }}
         />
         {/* Kept zone */}
         <div
-          className="absolute inset-y-0 bg-amber-500/15 border-x-2 border-amber-500"
+          className="absolute inset-y-0 bg-sun border-x-2 border-ink"
           style={{ left: `${startPct}%`, width: `${endPct - startPct}%` }}
         />
       </div>
@@ -110,7 +110,7 @@ export default function AudioTrimmer({ audioUrl, duration, onConfirm, onCancel }
       {/* Sliders */}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <label className="flex flex-col gap-1">
-          <span className="text-[10px] text-zinc-500 uppercase">{t("trim.start")}</span>
+          <span className="text-[10px] font-bold uppercase">{t("trim.start")}</span>
           <div className="flex items-center gap-2">
             <input
               type="range"
@@ -123,15 +123,15 @@ export default function AudioTrimmer({ audioUrl, duration, onConfirm, onCancel }
                 setStart(Math.min(v, end - 0.2));
                 stopPreview();
               }}
-              className="flex-1 accent-amber-500 h-1"
+              className="nb-range flex-1"
             />
-            <span className="text-xs text-zinc-300 w-10 text-right font-mono">
+            <span className="text-xs font-bold w-10 text-right font-mono">
               {formatTime(start)}
             </span>
           </div>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[10px] text-zinc-500 uppercase">{t("trim.end")}</span>
+          <span className="text-[10px] font-bold uppercase">{t("trim.end")}</span>
           <div className="flex items-center gap-2">
             <input
               type="range"
@@ -144,9 +144,9 @@ export default function AudioTrimmer({ audioUrl, duration, onConfirm, onCancel }
                 setEnd(Math.max(v, start + 0.2));
                 stopPreview();
               }}
-              className="flex-1 accent-amber-500 h-1"
+              className="nb-range flex-1"
             />
-            <span className="text-xs text-zinc-300 w-10 text-right font-mono">
+            <span className="text-xs font-bold w-10 text-right font-mono">
               {formatTime(end)}
             </span>
           </div>
@@ -157,14 +157,14 @@ export default function AudioTrimmer({ audioUrl, duration, onConfirm, onCancel }
       <div className="flex items-center gap-2">
         <button
           onClick={playing ? stopPreview : preview}
-          className="px-3 py-1.5 text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded transition-colors"
+          className="nb-btn bg-sky px-3 py-1.5 text-xs"
         >
           {playing ? "Stop" : t("trim.preview")}
         </button>
         <div className="flex-1" />
         <button
           onClick={onCancel}
-          className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="nb-btn bg-card px-3 py-1.5 text-xs"
         >
           {t("trim.cancel")}
         </button>
@@ -174,7 +174,7 @@ export default function AudioTrimmer({ audioUrl, duration, onConfirm, onCancel }
             onConfirm(start, end);
           }}
           disabled={start === 0 && end >= dur - 0.05}
-          className="px-3 py-1.5 text-xs bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="nb-btn bg-sun px-3 py-1.5 text-xs"
         >
           {t("trim.apply")}
         </button>

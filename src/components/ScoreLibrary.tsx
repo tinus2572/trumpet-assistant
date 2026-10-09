@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Difficulty, DIFFICULTIES, Score, ScoreTag, SCORE_TAGS, scoreDuration } from "@/lib/scores";
 import { effectiveDifficulty } from "@/lib/score-prefs";
 import { useI18n } from "@/lib/i18n";
-import { DifficultyBadge, DIFFICULTY_STYLE, TagPill } from "./ScoreBadges";
+import { DifficultyBadge, DIFFICULTY_STYLE, TAG_STYLE, TagPill } from "./ScoreBadges";
 
 type SortKey = "title" | "difficulty" | "tempo" | "duration";
 const SORT_KEYS: SortKey[] = ["title", "difficulty", "tempo", "duration"];
@@ -69,57 +69,56 @@ export default function ScoreLibrary({
 
   if (folded) {
     return (
-      <aside className="lg:w-12 shrink-0">
+      <aside className="lg:w-14 shrink-0">
         <button
           onClick={() => onFoldedChange(false)}
           title={t("library.unfold")}
-          className="w-full lg:h-48 flex lg:flex-col items-center justify-center gap-2 px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 hover:text-amber-400 hover:border-amber-500/50 transition-colors"
+          className="nb-btn bg-sun w-full lg:h-52 lg:flex-col px-3 py-2"
         >
           <span className="text-lg leading-none">»</span>
-          <span className="text-xs font-medium uppercase tracking-wider lg:[writing-mode:vertical-rl]">
-            {t("scores.title")}
-          </span>
+          <span className="nb-label lg:[writing-mode:vertical-rl]">{t("scores.title")}</span>
         </button>
       </aside>
     );
   }
 
-  const chip = (active: boolean, activeClass = "bg-amber-500/20 border-amber-500 text-amber-300") =>
-    `px-2 py-0.5 text-xs rounded-full border transition-colors ${
-      active ? activeClass : "border-zinc-700 text-zinc-500 hover:text-zinc-300 hover:border-zinc-500"
-    }`;
+  const inactiveChip = "bg-card";
 
   return (
-    <aside className="lg:w-80 shrink-0 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)]">
+    <aside className="nb-card lg:w-80 shrink-0 flex flex-col lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+      <div className="flex items-center justify-between px-4 py-3 bg-sun border-b-2 border-ink">
+        <h2 className="nb-label text-sm">
           {t("scores.title")}
-          <span className="ml-2 text-zinc-600 normal-case tracking-normal">
+          <span className="ml-2 font-mono font-bold normal-case tracking-normal">
             {visible.length}/{scores.length}
           </span>
         </h2>
         <button
           onClick={() => onFoldedChange(true)}
           title={t("library.fold")}
-          className="text-zinc-500 hover:text-amber-400 transition-colors text-lg leading-none px-1"
+          className="nb-btn bg-card w-8 h-8 text-lg leading-none"
         >
           «
         </button>
       </div>
 
       {/* Search, filters, sort */}
-      <div className="px-4 space-y-3 pb-3 border-b border-zinc-800">
+      <div className="px-4 py-3 space-y-3 border-b-2 border-ink bg-paper">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("scores.search")}
-          className="w-full px-3 py-1.5 text-sm bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-500"
+          className="nb-input text-sm"
         />
         <div className="flex flex-wrap gap-1.5">
           {SCORE_TAGS.map((tag) => (
-            <button key={tag} onClick={() => setTags((s) => toggled(s, tag))} className={chip(tags.has(tag))}>
+            <button
+              key={tag}
+              onClick={() => setTags((s) => toggled(s, tag))}
+              className={`nb-chip ${tags.has(tag) ? `${TAG_STYLE[tag]} shadow-nb-sm` : inactiveChip}`}
+            >
               {t(`tag.${tag}`)}
             </button>
           ))}
@@ -129,26 +128,24 @@ export default function ScoreLibrary({
             <button
               key={d}
               onClick={() => setLevels((s) => toggled(s, d))}
-              className={chip(levels.has(d), DIFFICULTY_STYLE[d].active)}
+              className={`nb-chip ${levels.has(d) ? `${DIFFICULTY_STYLE[d]} shadow-nb-sm` : inactiveChip}`}
             >
               {t(`difficulty.${d}`)}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-1 flex-wrap">
-          <span className="text-xs text-zinc-600 mr-1">{t("sort.label")}</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs font-bold mr-0.5">{t("sort.label")}</span>
           {SORT_KEYS.map((key) => {
             const active = sort.key === key;
             return (
               <button
                 key={key}
                 onClick={() => setSort((s) => (s.key === key ? { key, asc: !s.asc } : { key, asc: true }))}
-                className={`px-2 py-0.5 text-xs rounded transition-colors ${
-                  active ? "bg-zinc-700 text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
-                }`}
+                className={`nb-chip ${active ? "bg-ink text-card" : inactiveChip}`}
               >
                 {t(`sort.${key}`)}
-                {active && <span className="ml-0.5">{sort.asc ? "↑" : "↓"}</span>}
+                {active && <span>{sort.asc ? "↑" : "↓"}</span>}
               </button>
             );
           })}
@@ -160,7 +157,7 @@ export default function ScoreLibrary({
               setLevels(new Set());
               setSearch("");
             }}
-            className="text-xs text-zinc-500 hover:text-amber-400 transition-colors"
+            className="text-xs font-bold underline underline-offset-2 decoration-2 hover:decoration-sun-deep"
           >
             {t("library.clearFilters")}
           </button>
@@ -168,32 +165,30 @@ export default function ScoreLibrary({
       </div>
 
       {/* List */}
-      <ul className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[50vh] lg:max-h-none">
+      <ul className="flex-1 overflow-y-auto p-3 space-y-2.5 max-h-[50vh] lg:max-h-none">
         {visible.map((s) => {
           const selected = s.id === selectedId;
           return (
             <li key={s.id}>
               <button
                 onClick={() => onSelect(s)}
-                className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${
+                className={`w-full text-left px-3 py-2.5 border-2 border-ink rounded-nb transition-all ${
                   selected
-                    ? "bg-amber-500/10 border-amber-500/60"
-                    : "border-transparent hover:bg-zinc-800 hover:border-zinc-700"
+                    ? "bg-sun shadow-nb-sm translate-x-0.5 translate-y-0.5"
+                    : "bg-card hover:shadow-nb-sm hover:-translate-x-px hover:-translate-y-px"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <span className={`text-sm font-medium ${selected ? "text-amber-400" : "text-zinc-200"}`}>
-                    {s.title}
-                  </span>
-                  <span className="shrink-0 mt-0.5">
+                  <span className="text-sm font-bold leading-tight">{s.title}</span>
+                  <span className="shrink-0">
                     <DifficultyBadge difficulty={effectiveDifficulty(s, overrides)} />
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                   {s.tags.map((tag) => (
                     <TagPill key={tag} tag={tag} />
                   ))}
-                  <span className="text-[11px] text-zinc-500">
+                  <span className="text-[11px] font-medium text-ink/60">
                     {s.composer && <>{s.composer} · </>}
                     {s.tempo} BPM · {Math.round(scoreDuration(s))}s
                   </span>
@@ -203,7 +198,7 @@ export default function ScoreLibrary({
           );
         })}
         {visible.length === 0 && (
-          <li className="text-zinc-500 text-sm text-center py-6 px-4">{t("scores.none")}</li>
+          <li className="text-sm font-medium text-center py-6 px-4 text-ink/60">{t("scores.none")}</li>
         )}
       </ul>
     </aside>

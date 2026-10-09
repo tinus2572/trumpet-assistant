@@ -28,7 +28,7 @@ import {
 
 const NOTE_COLOR = "#000000"; // black
 const STAFF_LINE_COLOR = "#000000"; // black
-const ACTIVE_HALO = "rgba(245,158,11,0.25)"; // amber glow
+const ACTIVE_HALO = "rgba(255,210,63,0.55)"; // sun yellow
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** VexFlow note line for a pitch (E4 = 1 = bottom line of the treble staff, lines/spaces step by 0.5) */
@@ -622,13 +622,11 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
   }, [render]);
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+    <div className="bg-card border-2 border-ink rounded-nb overflow-hidden">
       <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-        <h2 className="text-sm font-medium text-zinc-600 uppercase tracking-wider">
-          {t("staff.title")}
-        </h2>
+        <h2 className="nb-label">{t("staff.title")}</h2>
         {mode === "replay" && noteActiveIndex !== null && (
-          <span className="text-[10px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">
+          <span className="text-[10px] font-bold bg-sun border-2 border-ink px-1.5 py-px rounded-md">
             {t("staff.playing")}
           </span>
         )}
