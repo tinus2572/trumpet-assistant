@@ -1,7 +1,7 @@
 // Trumpet synthesizer using SoundFont samples (MusyngKite)
 // Falls back to basic oscillators while samples are loading
 
-import { Score, noteToFrequency, beatsToSeconds } from "./partitions";
+import { Score, noteToFrequency, beatsToSeconds } from "./scores";
 import { Note, NOTE_TO_SEMITONE } from "./trumpet";
 
 export interface SynthOptions {

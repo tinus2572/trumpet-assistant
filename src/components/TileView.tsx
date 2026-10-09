@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { Score, beatsToSeconds } from "@/lib/partitions";
+import { Score, beatsToSeconds } from "@/lib/scores";
 import {
   NoteInfo,
   evaluatePitch,

@@ -1,0 +1,67 @@
+import { Note } from "../../trumpet";
+import { Score } from "../types";
+
+const { C, D, E, F, G } = Note;
+
+const lightlyRow: Score = {
+  id: "lightly-row",
+  title: "Lightly Row",
+  composer: "Traditional",
+  tempo: 100,
+  signature: [4, 4],
+  notes: [
+    // Lightly row, lightly row
+    { note: G, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 2 },
+    { note: F, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 2 },
+    { note: C, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 2 },
+    { note: G, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 2 },
+    { note: F, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 2 },
+    { note: C, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: C, octave: 4, duration: 4 },
+    // Let the winds and waters be
+    { note: D, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 2 },
+    { note: E, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 2 },
+    { note: G, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 2 },
+    { note: F, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 2 },
+    { note: C, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: C, octave: 4, duration: 4 },
+  ],
+};
+
+export default lightlyRow;

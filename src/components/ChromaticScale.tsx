@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Note, NoteInfo, evaluatePitch, TRUMPET_RANGE } from "@/lib/trumpet";
 import { useI18n } from "@/lib/i18n";
-import MiniValves from "./MiniValves";
 
 const SCALE = TRUMPET_RANGE;
 
@@ -61,30 +60,32 @@ export default function ChromaticScale({ currentNote }: ChromaticScaleProps) {
               onMouseEnter={() => setHover(i)}
               onMouseLeave={() => setHover(null)}
             >
-              {/* Fingering, staggered on two rows so neighbours don't touch */}
-              <div className="relative w-full h-12">
-                {i % 2 === 1 && (
-                  <div
-                    className={`absolute left-1/2 top-[23px] bottom-0 w-px transition-colors ${
-                      active || hovered ? "bg-amber-500/60" : "bg-zinc-700"
-                    }`}
-                  />
-                )}
-                <div
-                  className={`absolute left-1/2 -translate-x-1/2 w-[180%] max-w-[30px] ${
-                    i % 2 === 1 ? "top-0" : "top-[26px]"
-                  }`}
-                >
-                  <MiniValves
-                    pistons={n.pistons}
-                    pressedColor={
-                      active ? pitchQuality?.color ?? "#f59e0b" : hovered ? "#f59e0b" : "#d4d4d8"
-                    }
-                    releasedColor="#3f3f46"
-                    className="w-full block"
-                  />
+              {/* Hover tooltip */}
+              {hovered && !active && (
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                  <div className="bg-zinc-800 border border-zinc-600 rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-xl">
+                    <p className="text-xs font-bold text-amber-400">
+                      {dn(n.name)}<span className="text-[10px] text-zinc-400">{n.octave}</span>
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      {n.pistons.map((pressed, pi) => (
+                        <div
+                          key={pi}
+                          className={`w-3.5 h-5 rounded-sm border text-[8px] flex items-center justify-center font-bold ${
+                            pressed
+                              ? "border-amber-400 bg-amber-500/30 text-amber-400"
+                              : "border-zinc-600 bg-zinc-800 text-zinc-600"
+                          }`}
+                        >
+                          {pi + 1}
+                        </div>
+                      ))}
+                      <span className="text-[10px] text-zinc-400 ml-0.5">{n.fingeringLabel}</span>
+                    </div>
+                  </div>
+                  <div className="w-2 h-2 bg-zinc-800 border-b border-r border-zinc-600 rotate-45 absolute left-1/2 -translate-x-1/2 -bottom-1" />
                 </div>
-              </div>
+              )}
 
               {/* Note bar */}
               <div

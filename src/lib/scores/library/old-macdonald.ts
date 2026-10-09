@@ -1,0 +1,80 @@
+import { Note } from "../../trumpet";
+import { Score } from "../types";
+
+const { D, E, G, A, B } = Note;
+
+const oldMacdonald: Score = {
+  id: "old-macdonald",
+  title: "Old MacDonald",
+  composer: "Traditional",
+  tempo: 110,
+  signature: [4, 4],
+  notes: [
+    // Old MacDonald had a farm, E-I-E-I-O
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 2 },
+    { note: B, octave: 4, duration: 1 },
+    { note: B, octave: 4, duration: 1 },
+    { note: A, octave: 4, duration: 1 },
+    { note: A, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 3 },
+    { note: D, octave: 4, duration: 1 },
+    // And on his farm he had a cow, E-I-E-I-O
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 2 },
+    { note: B, octave: 4, duration: 1 },
+    { note: B, octave: 4, duration: 1 },
+    { note: A, octave: 4, duration: 1 },
+    { note: A, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 3 },
+    { note: D, octave: 4, duration: 0.5 },
+    { note: D, octave: 4, duration: 0.5 },
+    // With a moo moo here, and a moo moo there
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 0.5 },
+    { note: D, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 2 },
+    // Here a moo, there a moo, everywhere a moo moo
+    { note: G, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    // Old MacDonald had a farm, E-I-E-I-O
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: D, octave: 4, duration: 2 },
+    { note: B, octave: 4, duration: 1 },
+    { note: B, octave: 4, duration: 1 },
+    { note: A, octave: 4, duration: 1 },
+    { note: A, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 4 },
+  ],
+};
+
+export default oldMacdonald;

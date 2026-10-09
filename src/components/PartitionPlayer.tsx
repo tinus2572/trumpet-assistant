@@ -6,7 +6,7 @@ import {
   SCORES,
   scoreDuration,
   beatsToSeconds,
-} from "@/lib/partitions";
+} from "@/lib/scores";
 import { TrumpetSynth } from "@/lib/synth-trumpet";
 import { useI18n } from "@/lib/i18n";
 import Staff from "./Staff";

@@ -6,7 +6,7 @@ import {
   PlayedNote,
   evaluatePitch,
 } from "@/lib/trumpet";
-import { Score } from "@/lib/partitions";
+import { Score } from "@/lib/scores";
 import { useI18n } from "@/lib/i18n";
 import {
   Renderer,
@@ -335,8 +335,10 @@ function applyNoteStyle(
 const STAVE_HEIGHT = 180;
 const STAVE_Y = 20;
 const LINE_SPACING = 160; // vertical distance between stave rows
-const FIRST_MEASURE_WIDTH = 220; // wider for clef + time sig
-const MEASURE_WIDTH = 180;
+const MEASURE_WIDTH = 180; // minimum width of a measure
+const MEASURE_PADDING = 30; // stave space not available to notes
+const FIRST_MEASURE_PADDING = 80; // extra room for clef + time sig
+const LABEL_ROOM = 8; // per-note extra spacing so note-name labels don't collide
 
 // --- Component ---
 
@@ -452,22 +454,54 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
       ? buildScoreMeasures(score, notes, noteActiveIndex, mode, dn)
       : buildLiveMeasures(notes, noteActiveIndex, mode, dn);
 
+    // Prepare each measure's voice, beams and tuplets, and measure how much room its notes need
+    const prepared = measures.map((measure) => {
+      const voice = new Voice(
+        score
+          ? { numBeats: score.signature[0], beatValue: score.signature[1] }
+          : { numBeats: 4, beatValue: 4 }
+      );
+      voice.setMode(VoiceMode.SOFT);
+      const tuplets = measure.tupletGroups.map((group) => new Tuplet(group));
+      voice.addTickables(measure.vexNotes);
+      // Beam eighths by beat (e.g. pairs in 4/4) rather than as one long run
+      const beams = measure.beamGroups.flatMap((group) => Beam.generateBeams(group));
+      const formatter = new Formatter().joinVoices([voice]);
+      // Leave room for the note-name labels, which the formatter doesn't count
+      const noteArea = Math.max(
+        MEASURE_WIDTH - MEASURE_PADDING,
+        formatter.preCalculateMinTotalWidth([voice]) + measure.vexNotes.length * LABEL_ROOM
+      );
+      return { voice, tuplets, beams, formatter, noteArea };
+    });
+    const measureWidth = (mi: number, firstInLine: boolean) =>
+      prepared[mi].noteArea + (firstInLine ? FIRST_MEASURE_PADDING : MEASURE_PADDING);
+
     // Group measures into lines based on available width
     const lines: number[][] = [];
     let currentLine: number[] = [];
     let lineWidth = 0;
     for (let mi = 0; mi < measures.length; mi++) {
-      const w = currentLine.length === 0 ? FIRST_MEASURE_WIDTH : MEASURE_WIDTH;
+      const w = measureWidth(mi, currentLine.length === 0);
       if (lineWidth + w > availWidth && currentLine.length > 0) {
         lines.push(currentLine);
         currentLine = [mi];
-        lineWidth = FIRST_MEASURE_WIDTH;
+        lineWidth = measureWidth(mi, true);
       } else {
         currentLine.push(mi);
         lineWidth += w;
       }
     }
     if (currentLine.length > 0) lines.push(currentLine);
+
+    // Justify: stretch each line's note areas to fill the width (the last line only if mostly full)
+    const stretch = lines.map((line, lineIdx) => {
+      const natural = line.reduce((sum, mi, k) => sum + measureWidth(mi, k === 0), 0);
+      const isLast = lineIdx === lines.length - 1;
+      if (isLast && natural < availWidth * 0.7) return 1;
+      const notes = line.reduce((sum, mi) => sum + prepared[mi].noteArea, 0);
+      return Math.max(1, (notes + availWidth - natural - 1) / notes);
+    });
 
     const totalHeight = STAVE_Y + lines.length * LINE_SPACING;
     const svgW = Math.max(availWidth, 300);
@@ -484,7 +518,9 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
       measureIndices.forEach((mi, localIdx) => {
         const measure = measures[mi];
         const isFirstInLine = localIdx === 0;
-        const w = isFirstInLine ? FIRST_MEASURE_WIDTH : MEASURE_WIDTH;
+        const { voice, tuplets, beams, formatter } = prepared[mi];
+        const noteArea = prepared[mi].noteArea * stretch[lineIdx];
+        const w = noteArea + (isFirstInLine ? FIRST_MEASURE_PADDING : MEASURE_PADDING);
 
         const stave = new Stave(x, y, w);
         stave.setStyle({ fillStyle: STAFF_LINE_COLOR, strokeStyle: STAFF_LINE_COLOR });
@@ -499,17 +535,7 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
         stave.setContext(ctx).draw();
         rowStave ??= stave;
 
-        const voice = new Voice(
-          score
-            ? { numBeats: score.signature[0], beatValue: score.signature[1] }
-            : { numBeats: 4, beatValue: 4 }
-        );
-        voice.setMode(VoiceMode.SOFT);
-        const tuplets = measure.tupletGroups.map((group) => new Tuplet(group));
-        voice.addTickables(measure.vexNotes);
-        new Formatter().joinVoices([voice]).format([voice], w - (isFirstInLine ? 80 : 30));
-
-        const beams = measure.beamGroups.map((group) => new Beam(group));
+        formatter.format([voice], noteArea);
         voice.draw(ctx, stave);
         beams.forEach((b) => b.setContext(ctx).draw());
         tuplets.forEach((tp) => tp.setContext(ctx).draw());

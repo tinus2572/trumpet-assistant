@@ -1,0 +1,66 @@
+import { Note } from "../../trumpet";
+import { Score } from "../types";
+
+const { C, D, E, F, G, A } = Note;
+
+const londonBridge: Score = {
+  id: "london-bridge",
+  title: "London Bridge",
+  composer: "Traditional",
+  tempo: 100,
+  signature: [4, 4],
+  notes: [
+    // London Bridge is falling down
+    { note: G, octave: 4, duration: 1.5 },
+    { note: A, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 2 },
+    { note: D, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 2 },
+    { note: E, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 2 },
+    { note: G, octave: 4, duration: 1.5 },
+    { note: A, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 2 },
+    { note: D, octave: 4, duration: 2 },
+    { note: G, octave: 4, duration: 2 },
+    { note: E, octave: 4, duration: 1 },
+    { note: C, octave: 4, duration: 3 },
+    // Build it up with iron bars
+    { note: G, octave: 4, duration: 1.5 },
+    { note: A, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 2 },
+    { note: D, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 2 },
+    { note: E, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 2 },
+    { note: G, octave: 4, duration: 1.5 },
+    { note: A, octave: 4, duration: 0.5 },
+    { note: G, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1 },
+    { note: F, octave: 4, duration: 1 },
+    { note: G, octave: 4, duration: 2 },
+    { note: D, octave: 4, duration: 2 },
+    { note: G, octave: 4, duration: 2 },
+    { note: E, octave: 4, duration: 1 },
+    { note: C, octave: 4, duration: 3 },
+  ],
+};
+
+export default londonBridge;
