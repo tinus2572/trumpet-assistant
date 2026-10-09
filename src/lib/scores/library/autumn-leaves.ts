@@ -7,6 +7,8 @@ const autumnLeaves: Score = {
   id: "autumn-leaves",
   title: "Autumn Leaves",
   composer: "Joseph Kosma",
+  tags: ["jazz"],
+  difficulty: "medium",
   tempo: 100,
   signature: [4, 4],
   pickup: 3,

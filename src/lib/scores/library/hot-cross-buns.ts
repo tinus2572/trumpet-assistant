@@ -7,6 +7,8 @@ const hotCrossBuns: Score = {
   id: "hot-cross-buns",
   title: "Hot Cross Buns",
   composer: "Traditional",
+  tags: ["traditional"],
+  difficulty: "easy",
   tempo: 90,
   signature: [4, 4],
   notes: [

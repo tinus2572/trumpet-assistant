@@ -6,6 +6,8 @@ const { C, D, E, F, G, A } = Note;
 const ahVousDiraiJeMaman: Score = {
   id: "ah-vous-dirai-je-maman",
   title: "Ah ! Vous dirai-je Maman",
+  tags: ["traditional"],
+  difficulty: "easy",
   tempo: 100,
   signature: [4, 4],
   notes: [

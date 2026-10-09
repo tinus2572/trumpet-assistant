@@ -14,22 +14,19 @@ const translations = {
   },
 
   // Mic & recording controls
-  "mic.enable": { fr: "Activer le micro", en: "Enable mic" },
-  "mic.disable": { fr: "Couper le micro", en: "Disable mic" },
+  "mic.listening": { fr: "Micro actif", en: "Mic on" },
+  "mic.starting": { fr: "D\u00E9marrage du micro\u2026", en: "Starting mic\u2026" },
+  "mic.clickToStart": {
+    fr: "Cliquez n'importe o\u00F9 pour activer l'\u00E9coute du micro.",
+    en: "Click anywhere to start listening to the mic.",
+  },
+  "mic.retry": { fr: "R\u00E9essayer", en: "Retry" },
   "mic.error": {
     fr: "Impossible d'acc\u00E9der au microphone. V\u00E9rifiez les permissions.",
     en: "Cannot access microphone. Check permissions.",
   },
   "rec.start": { fr: "Enregistrer", en: "Record" },
   "rec.stop": { fr: "Arr\u00EAter l'enregistrement", en: "Stop recording" },
-
-  // Mute
-  "mute.label": { fr: "Sourdine", en: "Mute comp." },
-
-  // Fingering
-  "fingering.title": { fr: "Doigt\u00E9", en: "Fingering" },
-  "fingering.open": { fr: "Ouvert", en: "Open" },
-  "fingering.concert": { fr: "Concert", en: "Concert" },
 
   // Pitch quality
   "pitch.excellent": { fr: "Excellent", en: "Excellent" },
@@ -83,13 +80,15 @@ const translations = {
   "scores.stop": { fr: "Arr\u00EAter", en: "Stop" },
   "scores.muted": { fr: "Muet", en: "Muted" },
   "scores.sound": { fr: "Son", en: "Sound" },
-  "scores.micActive": { fr: "Micro actif", en: "Mic active" },
-  "scores.micEnable": { fr: "Activer micro", en: "Enable mic" },
-  "scores.change": { fr: "Changer", en: "Change" },
+  "scores.close": { fr: "Fermer la partition", en: "Close score" },
+  "scores.empty": {
+    fr: "Choisissez une partition dans la biblioth\u00E8que pour la jouer.",
+    en: "Pick a score from the library to play it.",
+  },
   "scores.howTo": { fr: "Comment jouer :", en: "How to play:" },
   "scores.instructions": {
-    fr: "\u00C9coutez d'abord la partition, puis activez le micro et rejouez par-dessus. Coupez le son pour jouer sans guide et comparer votre justesse.",
-    en: "Listen to the score first, then enable the mic and play along. Mute the sound to play without a guide and compare your pitch.",
+    fr: "\u00C9coutez d'abord la partition, puis rejouez par-dessus : la note que vous jouez est surlign\u00E9e sur la port\u00E9e. Coupez le son pour jouer sans guide.",
+    en: "Listen to the score first, then play along: the note you play is highlighted on the staff. Mute the sound to play without a guide.",
   },
 
   "scores.viewSheet": { fr: "Partition", en: "Sheet" },
@@ -103,12 +102,36 @@ const translations = {
   "tiles.combo": { fr: "S\u00E9rie", en: "Combo" },
   "tiles.bestCombo": { fr: "Meilleure s\u00E9rie", en: "Best combo" },
   "tiles.notesHit": { fr: "notes r\u00E9ussies", en: "notes hit" },
-  "tiles.micHint": { fr: "Activez le micro pour jouer", en: "Enable the mic to play" },
+  "tiles.micHint": { fr: "Micro indisponible", en: "Mic unavailable" },
   "tiles.startHint": { fr: "Appuyez sur 3\u2026 2\u2026 1\u2026 pour commencer", en: "Press 3\u2026 2\u2026 1\u2026 to start" },
   "tiles.instructions": {
     fr: "Jouez chaque note quand sa tuile atteint la ligne, et tenez-la tant que la tuile la traverse. Coupez le son pour que le micro n'entende que vous.",
     en: "Play each note when its tile reaches the line, and hold it while the tile crosses it. Mute the sound so the mic only hears you.",
   },
+
+  // Score library
+  "library.fold": { fr: "Replier", en: "Fold" },
+  "library.unfold": { fr: "Afficher les partitions", en: "Show scores" },
+  "library.clearFilters": { fr: "Effacer les filtres", en: "Clear filters" },
+  "sort.label": { fr: "Trier :", en: "Sort:" },
+  "sort.title": { fr: "Titre", en: "Title" },
+  "sort.difficulty": { fr: "Difficult\u00E9", en: "Difficulty" },
+  "sort.tempo": { fr: "Tempo", en: "Tempo" },
+  "sort.duration": { fr: "Dur\u00E9e", en: "Length" },
+
+  // Score labels
+  "tag.jazz": { fr: "Jazz", en: "Jazz" },
+  "tag.traditional": { fr: "Traditionnel", en: "Traditional" },
+  "tag.classical": { fr: "Classique", en: "Classical" },
+  "tag.exercise": { fr: "Exercice", en: "Exercise" },
+
+  // Difficulty
+  "difficulty.label": { fr: "Difficult\u00E9", en: "Difficulty" },
+  "difficulty.easy": { fr: "Facile", en: "Easy" },
+  "difficulty.medium": { fr: "Moyen", en: "Medium" },
+  "difficulty.hard": { fr: "Difficile", en: "Hard" },
+  "difficulty.impossible": { fr: "Impossible", en: "Impossible" },
+  "difficulty.reset": { fr: "Revenir \u00E0 la difficult\u00E9 par d\u00E9faut", en: "Reset to default difficulty" },
 
   // Notes
   "note.singular": { fr: "note", en: "note" },

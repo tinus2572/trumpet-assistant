@@ -1,16 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Score,
-  SCORES,
-  scoreDuration,
-  beatsToSeconds,
-} from "@/lib/scores";
+import { Difficulty, Score, scoreDuration, beatsToSeconds } from "@/lib/scores";
 import { TrumpetSynth } from "@/lib/synth-trumpet";
 import { useI18n } from "@/lib/i18n";
 import Staff from "./Staff";
 import TileView, { TILE_LOOKAHEAD } from "./TileView";
+import { DifficultyPicker, TagPill } from "./ScoreBadges";
 import { Note, NoteInfo, PlayedNote, NOTE_TO_SEMITONE, evaluatePitch } from "@/lib/trumpet";
 
 // Transposition steps: Do3 ↔ Sol3 ↔ Do4 ↔ Sol4 ↔ Do5
@@ -52,11 +48,19 @@ function transposeScore(score: Score, semitones: number): Score {
   };
 }
 
+export type ScoreView = "sheet" | "tiles";
+
 interface ScorePlayerProps {
-  onRequestMic?: () => void;
-  micActive?: boolean;
+  score: Score;
+  view: ScoreView;
+  onViewChange: (view: ScoreView) => void;
+  difficulty: Difficulty;
+  difficultyOverridden: boolean;
+  onDifficultyChange: (difficulty: Difficulty | null) => void;
+  onClose: () => void;
+  micReady: boolean;
   /** Note currently detected on the mic, highlighted on the staff */
-  liveNote?: NoteInfo | null;
+  liveNote: NoteInfo | null;
 }
 
 // Convert score notes to PlayedNote[] for the Staff component
@@ -87,29 +91,30 @@ function scoreToPlayedNotes(score: Score): PlayedNote[] {
   });
 }
 
+/** Player for one score. Remount it (key={score.id}) to start fresh on another score. */
 export default function ScorePlayer({
-  onRequestMic,
-  micActive,
+  score,
+  view,
+  onViewChange,
+  difficulty,
+  difficultyOverridden,
+  onDifficultyChange,
+  onClose,
+  micReady,
   liveNote,
 }: ScorePlayerProps) {
   const { t } = useI18n();
-  const [activeScore, setActiveScore] = useState<Score | null>(null);
-  const [search, setSearch] = useState("");
   const [noteActiveIdx, setNoteActiveIdx] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(0.5);
   const [muted, setMuted] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [transposeIdx, setTransposeIdx] = useState(DEFAULT_TRANSPOSE_IDX);
-  const [view, setView] = useState<"sheet" | "tiles">("sheet");
   // performance.now() at which the first beat reaches the tile hit line
   const [tileOrigin, setTileOrigin] = useState<number | null>(null);
   const transposedScore = useMemo(
-    () =>
-      activeScore
-        ? transposeScore(activeScore, TRANSPOSE_STEPS[transposeIdx].semitones)
-        : null,
-    [activeScore, transposeIdx]
+    () => transposeScore(score, TRANSPOSE_STEPS[transposeIdx].semitones),
+    [score, transposeIdx]
   );
 
   const synthRef = useRef<TrumpetSynth | null>(null);
@@ -126,8 +131,6 @@ export default function ScorePlayer({
   }, []);
 
   const play = useCallback(() => {
-    if (!transposedScore) return;
-
     if (!synthRef.current) {
       synthRef.current = new TrumpetSynth();
     }
@@ -194,19 +197,7 @@ export default function ScorePlayer({
     }, 1000);
   }, [countdown, cancelCountdown, play]);
 
-  const selectScore = (p: Score) => {
-    stop();
-    cancelCountdown();
-    setActiveScore(p);
-    setNoteActiveIdx(null);
-    setTransposeIdx(DEFAULT_TRANSPOSE_IDX);
-    setSearch("");
-  };
-
-  const notesStaff = useMemo(
-    () => (transposedScore ? scoreToPlayedNotes(transposedScore) : []),
-    [transposedScore]
-  );
+  const notesStaff = useMemo(() => scoreToPlayedNotes(transposedScore), [transposedScore]);
   const staffHighlight = liveNote
     ? {
         note: liveNote.writtenNote,
@@ -214,89 +205,40 @@ export default function ScorePlayer({
         color: evaluatePitch(liveNote.centsOffset).color,
       }
     : null;
-  const duration = transposedScore ? scoreDuration(transposedScore) : 0;
-
-  // Filter scores by search query
-  const searchResults =
-    search.trim().length > 0
-      ? SCORES.filter((p) => {
-          const normalize = (s: string) =>
-            s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-          const r = normalize(search);
-          return (
-            normalize(p.title).includes(r) ||
-            normalize(p.id).includes(r) ||
-            (p.composer && normalize(p.composer).includes(r))
-          );
-        })
-      : SCORES;
+  const duration = scoreDuration(transposedScore);
 
   return (
     <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
-      <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider mb-4">
-        {t("scores.title")}
-      </h2>
-
-      {/* Score selection */}
-      {!activeScore && (
-        <div>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("scores.search")}
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-500 mb-4"
-          />
-
-          <div className="grid gap-2">
-            {searchResults.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => selectScore(p)}
-                className="text-left px-4 py-3 bg-zinc-800 hover:bg-zinc-750 hover:border-amber-500/50 border border-zinc-700 rounded-lg transition-colors"
-              >
-                <div className="font-medium text-zinc-200">{p.title}</div>
-                <div className="text-xs text-zinc-500 mt-0.5">
-                  {p.composer && <span>{p.composer} · </span>}
-                  <span>{p.tempo} BPM</span>
-                  <span> · {p.notes.length} {t("note.plural")}</span>
-                </div>
-              </button>
-            ))}
-            {searchResults.length === 0 && (
-              <p className="text-zinc-500 text-sm text-center py-4">
-                {t("scores.none")}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Score player */}
-      {activeScore && (
         <div className="space-y-4">
           {/* Score info */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-amber-400">
-                {activeScore.title}
-              </h3>
-              <p className="text-xs text-zinc-500">
-                {activeScore.composer && (
-                  <span>{activeScore.composer} · </span>
-                )}
-                {activeScore.tempo} BPM · {Math.round(duration)}s ·{" "}
-                {activeScore.notes.length} {t("note.plural")}
-              </p>
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-semibold text-amber-400">{score.title}</h3>
+              <div className="flex items-center gap-1.5 flex-wrap text-xs text-zinc-500">
+                {score.tags.map((tag) => (
+                  <TagPill key={tag} tag={tag} />
+                ))}
+                <span>
+                  {score.composer && <>{score.composer} · </>}
+                  {score.tempo} BPM · {Math.round(duration)}s · {score.notes.length} {t("note.plural")}
+                </span>
+              </div>
+              <DifficultyPicker
+                value={difficulty}
+                overridden={difficultyOverridden}
+                onChange={onDifficultyChange}
+              />
             </div>
             <button
               onClick={() => {
                 stop();
-                setActiveScore(null);
+                cancelCountdown();
+                onClose();
               }}
-              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              title={t("scores.close")}
+              className="text-zinc-500 hover:text-zinc-200 transition-colors text-lg leading-none px-1"
             >
-              {t("scores.change")}
+              ×
             </button>
           </div>
 
@@ -338,7 +280,7 @@ export default function ScorePlayer({
             {(["sheet", "tiles"] as const).map((v) => (
               <button
                 key={v}
-                onClick={() => setView(v)}
+                onClick={() => onViewChange(v)}
                 className={`px-3 py-1.5 transition-colors ${
                   view === v
                     ? "bg-amber-500 text-zinc-900 font-bold"
@@ -355,18 +297,16 @@ export default function ScorePlayer({
               notes={notesStaff}
               noteActiveIndex={noteActiveIdx}
               mode={playing ? "replay" : "live"}
-              score={transposedScore ?? undefined}
+              score={transposedScore}
               highlight={staffHighlight}
             />
           ) : (
-            transposedScore && (
-              <TileView
-                score={transposedScore}
-                origin={tileOrigin}
-                liveNote={liveNote ?? null}
-                micActive={!!micActive}
-              />
-            )
+            <TileView
+              score={transposedScore}
+              origin={tileOrigin}
+              liveNote={liveNote}
+              micActive={micReady}
+            />
           )}
 
           {/* Playback controls */}
@@ -427,20 +367,6 @@ export default function ScorePlayer({
                 />
               )}
             </div>
-
-            {/* Mic button */}
-            {onRequestMic && (
-              <button
-                onClick={onRequestMic}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  micActive
-                    ? "bg-green-900/30 text-green-400 border border-green-800"
-                    : "bg-zinc-800 text-zinc-400 border border-zinc-700 hover:border-amber-500/50"
-                }`}
-              >
-                {micActive ? t("scores.micActive") : t("scores.micEnable")}
-              </button>
-            )}
           </div>
 
           {/* Instructions */}
@@ -451,7 +377,6 @@ export default function ScorePlayer({
             </p>
           </div>
         </div>
-      )}
     </div>
   );
 }

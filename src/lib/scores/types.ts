@@ -14,10 +14,19 @@ export interface ScoreNote {
   rest?: number;
 }
 
+export const SCORE_TAGS = ["jazz", "traditional", "classical", "exercise"] as const;
+export type ScoreTag = (typeof SCORE_TAGS)[number];
+
+export const DIFFICULTIES = ["easy", "medium", "hard", "impossible"] as const;
+export type Difficulty = (typeof DIFFICULTIES)[number];
+
 export interface Score {
   id: string;
   title: string;
   composer?: string;
+  tags: ScoreTag[];
+  // Default difficulty; the player can override it (see score-prefs)
+  difficulty: Difficulty;
   tempo: number; // BPM (quarter notes per minute)
   signature: [number, number]; // e.g. [4, 4]
   // Beats in an incomplete first measure (anacrusis), if any

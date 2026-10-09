@@ -46,7 +46,7 @@ function noteHue(midi: number): number {
   return (((midi % 12) + 12) % 12) * 30 + 20;
 }
 
-/** Mini fingering diagram: three valves, pressed ones pushed down (like PistonDisplay) */
+/** Mini fingering diagram: three valves, pressed ones pushed down */
 function drawValves(
   ctx: CanvasRenderingContext2D,
   cx: number,

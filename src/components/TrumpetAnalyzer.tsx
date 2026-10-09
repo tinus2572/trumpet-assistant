@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { detectPitch } from "@/lib/pitch-detection";
 import {
   frequencyToNote,
-  evaluatePitch,
   computeSummary,
   NoteInfo,
   PlayedNote,
@@ -19,11 +18,19 @@ import {
 } from "@/lib/audio-storage";
 import { trimAudio } from "@/lib/audio-trim";
 import { useI18n } from "@/lib/i18n";
-import PistonDisplay from "./PistonDisplay";
 import ChromaticScale from "./ChromaticScale";
 import Staff from "./Staff";
 import History from "./History";
-import ScorePlayer from "./PartitionPlayer";
+import ScorePlayer, { ScoreView } from "./PartitionPlayer";
+import ScoreLibrary from "./ScoreLibrary";
+import { SCORES } from "@/lib/scores";
+import {
+  effectiveDifficulty,
+  setDifficultyOverride,
+  setLibraryFolded,
+  useDifficultyOverrides,
+  useLibraryFolded,
+} from "@/lib/score-prefs";
 import LangSwitch from "./LangSwitch";
 import Metronome from "./Metronome";
 
@@ -44,10 +51,12 @@ function saveHistory(recordings: Recording[]) {
 }
 
 export default function TrumpetAnalyzer() {
-  const { t, lang, dn } = useI18n();
+  const { t, lang } = useI18n();
   const langRef = useRef(lang);
   useEffect(() => { langRef.current = lang; }, [lang]);
-  const [listening, setListening] = useState(false);
+  // The mic starts on page load; browsers may hold audio until the first click ("suspended")
+  const [micState, setMicState] = useState<"starting" | "ready" | "suspended" | "error">("starting");
+  const [micAttempt, setMicAttempt] = useState(0);
   const [recording, setRecording] = useState(false);
   const [currentNote, setCurrentNote] = useState<NoteInfo | null>(null);
   const [playedNotes, setPlayedNotes] = useState<PlayedNote[]>([]);
@@ -67,21 +76,19 @@ export default function TrumpetAnalyzer() {
     setHistory(dedup);
   }, []);
   const [selectionId, setSelectionId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [muted, setMuted] = useState(false);
-  const [compensationCents, setCompensationCents] = useState(25);
+  const [selectedScoreId, setSelectedScoreId] = useState<string | null>(null);
+  const [scoreView, setScoreView] = useState<ScoreView>("sheet");
+  const difficultyOverrides = useDifficultyOverrides();
+  const libraryFolded = useLibraryFolded();
   const [playbackTime, setPlaybackTime] = useState<number | null>(null);
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const startRef = useRef<number>(0);
   const recordingSavedRef = useRef(false);
-  const muteRef = useRef({ active: false, cents: 25 });
   // Stabilization: a note must be detected N consecutive frames before being confirmed
   const candidateRef = useRef<string | null>(null);
   const candidateCountRef = useRef(0);
@@ -101,10 +108,6 @@ export default function TrumpetAnalyzer() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    muteRef.current = { active: muted, cents: compensationCents };
-  }, [muted, compensationCents]);
 
   const analyzerLoop = useCallback(
     (analyser: AnalyserNode, sampleRate: number) => {
@@ -129,8 +132,7 @@ export default function TrumpetAnalyzer() {
         const now = Date.now();
 
         if (freq !== null) {
-          const { active, cents } = muteRef.current;
-          const note = frequencyToNote(freq, active ? cents : 0);
+          const note = frequencyToNote(freq);
           if (note) {
             const noteKey = `${note.writtenNote}${note.writtenOctave}`;
             silenceCountRef.current = 0;
@@ -176,34 +178,73 @@ export default function TrumpetAnalyzer() {
     []
   );
 
-  const startListening = useCallback(async () => {
-    try {
-      setError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-      });
+  // Always-on microphone
+  useEffect(() => {
+    let cancelled = false;
+    let teardown: (() => void) | null = null;
+
+    (async () => {
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          },
+        });
+      } catch {
+        if (!cancelled) setMicState("error");
+        return;
+      }
+      if (cancelled) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
 
       const audioCtx = new AudioContext();
-      audioCtxRef.current = audioCtx;
-
       const source = audioCtx.createMediaStreamSource(stream);
-      sourceRef.current = source;
-
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 8192;
       source.connect(analyser);
-
-      setListening(true);
       analyzerLoop(analyser, audioCtx.sampleRate);
-    } catch {
-      setError(t("mic.error"));
-    }
-  }, [analyzerLoop, t]);
+
+      // An AudioContext created without a user gesture starts suspended: resume on first interaction
+      const resume = () => {
+        audioCtx.resume().then(() => {
+          if (!cancelled) setMicState("ready");
+        });
+      };
+      if (audioCtx.state === "suspended") {
+        setMicState("suspended");
+        window.addEventListener("pointerdown", resume, { once: true });
+        window.addEventListener("keydown", resume, { once: true });
+      } else {
+        setMicState("ready");
+      }
+
+      teardown = () => {
+        window.removeEventListener("pointerdown", resume);
+        window.removeEventListener("keydown", resume);
+        cancelAnimationFrame(rafRef.current);
+        source.disconnect();
+        audioCtx.close();
+        stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        candidateRef.current = null;
+        candidateCountRef.current = 0;
+        confirmedNoteRef.current = null;
+        confirmedNoteInfoRef.current = null;
+        silenceCountRef.current = 0;
+      };
+    })();
+
+    return () => {
+      cancelled = true;
+      teardown?.();
+    };
+  }, [analyzerLoop, micAttempt]);
 
   const startRecording = useCallback(() => {
     if (!streamRef.current) return;
@@ -274,24 +315,6 @@ export default function TrumpetAnalyzer() {
     recorder.stop();
     setRecording(false);
   }, []);
-
-  const stopListening = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    if (sourceRef.current) sourceRef.current.disconnect();
-    if (audioCtxRef.current) audioCtxRef.current.close();
-    if (streamRef.current)
-      streamRef.current.getTracks().forEach((track) => track.stop());
-
-    setListening(false);
-    setCurrentNote(null);
-    candidateRef.current = null;
-    candidateCountRef.current = 0;
-    confirmedNoteRef.current = null;
-    confirmedNoteInfoRef.current = null;
-    silenceCountRef.current = 0;
-
-    if (recording) stopRecording();
-  }, [recording, stopRecording]);
 
   const deleteRecording = useCallback(
     (id: string) => {
@@ -397,178 +420,145 @@ export default function TrumpetAnalyzer() {
     return null;
   })();
 
-  const pitchQuality = currentNote ? evaluatePitch(currentNote.centsOffset) : null;
+  const micReady = micState === "ready";
+  const selectedScore = SCORES.find((s) => s.id === selectedScoreId) ?? null;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
-        <header className="text-center mb-8 relative">
-          <div className="absolute right-0 top-0">
+        <header className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-amber-400">{t("app.title")}</h1>
+            <p className="text-sm text-zinc-500">{t("app.subtitle")}</p>
+          </div>
+          <div className="shrink-0">
             <LangSwitch />
           </div>
-          <h1 className="text-3xl font-bold text-amber-400">
-            {t("app.title")}
-          </h1>
-          <p className="text-zinc-400 mt-1">
-            {t("app.subtitle")}
-          </p>
         </header>
 
-        {error && (
-          <div className="bg-red-900/30 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-6 text-center">
-            {error}
+        {micState === "error" && (
+          <div className="bg-red-900/30 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-4 flex items-center justify-between gap-4">
+            <span>{t("mic.error")}</span>
+            <button
+              onClick={() => {
+                setMicState("starting");
+                setMicAttempt((n) => n + 1);
+              }}
+              className="px-3 py-1 text-sm bg-red-800/60 hover:bg-red-700/60 rounded transition-colors"
+            >
+              {t("mic.retry")}
+            </button>
+          </div>
+        )}
+        {micState === "suspended" && (
+          <div className="bg-amber-500/10 border border-amber-500/40 text-amber-300 px-4 py-3 rounded-lg mb-4 text-sm">
+            {t("mic.clickToStart")}
           </div>
         )}
 
-        {/* Controls */}
-        <div className="flex justify-center gap-4 mb-8">
-          {!listening ? (
-            <button
-              onClick={startListening}
-              className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold rounded-lg transition-colors"
-            >
-              {t("mic.enable")}
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={stopListening}
-                className="px-6 py-3 bg-zinc-700 hover:bg-zinc-600 text-zinc-100 font-bold rounded-lg transition-colors"
-              >
-                {t("mic.disable")}
-              </button>
+        <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
+          <ScoreLibrary
+            scores={SCORES}
+            selectedId={selectedScoreId}
+            onSelect={(score) => setSelectedScoreId(score.id)}
+            overrides={difficultyOverrides}
+            folded={libraryFolded}
+            onFoldedChange={setLibraryFolded}
+          />
+
+          <main className="flex-1 min-w-0 space-y-4">
+            {/* Mic status + recording */}
+            <div className="flex items-center justify-between gap-4">
+              <span className="inline-flex items-center gap-2 text-xs text-zinc-400">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    micReady ? "bg-green-500 animate-pulse" : micState === "error" ? "bg-red-500" : "bg-zinc-600"
+                  }`}
+                />
+                {micReady ? t("mic.listening") : micState === "error" ? t("tiles.micHint") : t("mic.starting")}
+              </span>
               {!recording ? (
                 <button
                   onClick={startRecording}
-                  className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg transition-colors flex items-center gap-2"
+                  disabled={!micReady}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
                 >
-                  <span className="w-3 h-3 rounded-full bg-white" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-white" />
                   {t("rec.start")}
                 </button>
               ) : (
                 <button
                   onClick={stopRecording}
-                  className="px-6 py-3 bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg transition-colors animate-pulse flex items-center gap-2"
+                  className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white text-sm font-bold rounded-lg transition-colors animate-pulse flex items-center gap-2"
                 >
-                  <span className="w-3 h-3 rounded-sm bg-white" />
+                  <span className="w-2.5 h-2.5 rounded-sm bg-white" />
                   {t("rec.stop")}
                 </button>
               )}
-            </>
-          )}
-        </div>
+            </div>
 
-        {/* Mute compensation mode */}
-        <div className="flex justify-center mb-6">
-          <div className="bg-zinc-900 rounded-lg border border-zinc-800 px-4 py-3 inline-flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={muted}
-                onChange={(e) => setMuted(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-9 h-5 bg-zinc-700 rounded-full peer-checked:bg-amber-500 relative transition-colors">
-                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${muted ? "left-[1.125rem]" : "left-0.5"}`} />
-              </div>
-              <span className="text-sm text-zinc-300">{t("mute.label")}</span>
-            </label>
-            {muted && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min="0"
-                  max="50"
-                  value={compensationCents}
-                  onChange={(e) => setCompensationCents(Number(e.target.value))}
-                  className="w-24 accent-amber-500"
-                />
-                <span className="text-xs text-zinc-400 w-16">
-                  -{compensationCents} cents
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Main display */}
-        {listening && (
-          <div className="space-y-4 mb-8">
-            {/* Chromatic scale + pitch */}
             <ChromaticScale currentNote={currentNote} />
 
-            {/* Fingering */}
-            <div className="bg-zinc-900 rounded-xl p-5 border border-zinc-800 flex flex-col items-center">
-              <h2 className="text-sm font-medium text-zinc-400 mb-3 uppercase tracking-wider">
-                {t("fingering.title")}
-              </h2>
-              <PistonDisplay
-                pistons={currentNote?.pistons ?? [false, false, false]}
-                fingeringLabel={currentNote?.fingeringLabel ?? "-"}
+            {/* Live staff during recording */}
+            {recording && (
+              <Staff
+                notes={playedNotes}
+                noteActiveIndex={playedNotes.length > 0 ? playedNotes.length - 1 : null}
+                mode="live"
               />
-              {currentNote && (
-                <p className="text-xs text-zinc-500 mt-2">
-                  {t("fingering.concert")} : {dn(currentNote.concertNote)}
-                  {currentNote.concertOctave}
-                  {" · "}
-                  <span style={{ color: pitchQuality?.color }}>
-                    {pitchQuality ? t(pitchQuality.labelKey) : ""}
-                  </span>
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Live staff during recording */}
-        {recording && (
-          <div className="mb-8">
-            <Staff
-              notes={playedNotes}
-              noteActiveIndex={playedNotes.length > 0 ? playedNotes.length - 1 : null}
-              mode="live"
-            />
-          </div>
-        )}
-
-        {/* Scores */}
-        <div className="mb-8">
-          <ScorePlayer
-            onRequestMic={!listening ? startListening : undefined}
-            micActive={listening}
-            liveNote={listening ? currentNote : null}
-          />
-        </div>
-
-        {/* History */}
-        <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-              {t("history.title")}
-            </h2>
-            {history.length > 0 && (
-              <button
-                onClick={clearHistory}
-                className="text-xs text-zinc-600 hover:text-red-400 transition-colors"
-              >
-                {t("history.clearAll")}
-              </button>
             )}
-          </div>
-          <History
-            recordings={history}
-            audioUrls={audioUrls}
-            onSelect={(e) => {
-              setSelectionId(selectionId === e.id ? null : e.id);
-              setPlaybackTime(null);
-            }}
-            onDelete={deleteRecording}
-            onTrim={trimRecording}
-            selectionId={selectionId}
-            onPlaybackTime={setPlaybackTime}
-            replayNoteIndex={replayNoteIndex}
-          />
+
+            {/* Selected score */}
+            {selectedScore ? (
+              <ScorePlayer
+                key={selectedScore.id}
+                score={selectedScore}
+                view={scoreView}
+                onViewChange={setScoreView}
+                difficulty={effectiveDifficulty(selectedScore, difficultyOverrides)}
+                difficultyOverridden={selectedScore.id in difficultyOverrides}
+                onDifficultyChange={(d) => setDifficultyOverride(selectedScore.id, d)}
+                onClose={() => setSelectedScoreId(null)}
+                micReady={micReady}
+                liveNote={currentNote}
+              />
+            ) : (
+              <div className="bg-zinc-900/50 rounded-xl border border-dashed border-zinc-800 px-6 py-10 text-center text-sm text-zinc-500">
+                {t("scores.empty")}
+              </div>
+            )}
+
+            {/* History */}
+            <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+                  {t("history.title")}
+                </h2>
+                {history.length > 0 && (
+                  <button
+                    onClick={clearHistory}
+                    className="text-xs text-zinc-600 hover:text-red-400 transition-colors"
+                  >
+                    {t("history.clearAll")}
+                  </button>
+                )}
+              </div>
+              <History
+                recordings={history}
+                audioUrls={audioUrls}
+                onSelect={(e) => {
+                  setSelectionId(selectionId === e.id ? null : e.id);
+                  setPlaybackTime(null);
+                }}
+                onDelete={deleteRecording}
+                onTrim={trimRecording}
+                selectionId={selectionId}
+                onPlaybackTime={setPlaybackTime}
+                replayNoteIndex={replayNoteIndex}
+              />
+            </div>
+          </main>
         </div>
       </div>
       <Metronome />

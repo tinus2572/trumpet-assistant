@@ -6,6 +6,8 @@ const { C, D, E, F, G, A, B } = Note;
 const happyBirthday: Score = {
   id: "happy-birthday",
   title: "Happy Birthday",
+  tags: ["traditional"],
+  difficulty: "medium",
   tempo: 100,
   signature: [3, 4],
   pickup: 1,

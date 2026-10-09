@@ -7,6 +7,8 @@ const odeALaJoie: Score = {
   id: "ode-a-la-joie",
   title: "Ode a la Joie",
   composer: "Beethoven",
+  tags: ["classical"],
+  difficulty: "easy",
   tempo: 100,
   signature: [4, 4],
   notes: [

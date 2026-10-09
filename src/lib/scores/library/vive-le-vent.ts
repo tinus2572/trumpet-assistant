@@ -7,6 +7,8 @@ const viveLeVent: Score = {
   id: "vive-le-vent",
   title: "Vive le Vent",
   composer: "James Pierpont",
+  tags: ["traditional"],
+  difficulty: "medium",
   tempo: 120,
   signature: [4, 4],
   notes: [

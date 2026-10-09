@@ -6,6 +6,8 @@ const { C, D, E, G } = Note;
 const maryHadALittleLamb: Score = {
   id: "mary-had-a-little-lamb",
   title: "Mary Had a Little Lamb",
+  tags: ["traditional"],
+  difficulty: "easy",
   tempo: 100,
   signature: [4, 4],
   notes: [

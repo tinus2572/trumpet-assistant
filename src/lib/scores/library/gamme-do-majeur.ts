@@ -6,6 +6,8 @@ const { C, D, E, F, G, A, B } = Note;
 const gammeDoMajeur: Score = {
   id: "gamme-do-majeur",
   title: "Gamme de Do Majeur",
+  tags: ["exercise"],
+  difficulty: "easy",
   tempo: 80,
   signature: [4, 4],
   notes: [

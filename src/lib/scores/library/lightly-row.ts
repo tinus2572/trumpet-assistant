@@ -7,6 +7,8 @@ const lightlyRow: Score = {
   id: "lightly-row",
   title: "Lightly Row",
   composer: "Traditional",
+  tags: ["traditional"],
+  difficulty: "easy",
   tempo: 100,
   signature: [4, 4],
   notes: [

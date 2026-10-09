@@ -9,6 +9,8 @@ const summertime: Score = {
   id: "summertime",
   title: "Summertime",
   composer: "George Gershwin",
+  tags: ["jazz"],
+  difficulty: "hard",
   tempo: 100,
   signature: [4, 4],
   pickup: 2,

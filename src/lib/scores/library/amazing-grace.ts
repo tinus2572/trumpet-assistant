@@ -7,6 +7,8 @@ const amazingGrace: Score = {
   id: "amazing-grace",
   title: "Amazing Grace",
   composer: "John Newton",
+  tags: ["traditional"],
+  difficulty: "medium",
   tempo: 80,
   signature: [3, 4],
   pickup: 1,

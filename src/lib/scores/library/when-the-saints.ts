@@ -7,6 +7,8 @@ const whenTheSaints: Score = {
   id: "when-the-saints",
   title: "When the Saints Go Marching In",
   composer: "Traditional",
+  tags: ["jazz", "traditional"],
+  difficulty: "easy",
   tempo: 110,
   signature: [4, 4],
   pickup: 3,

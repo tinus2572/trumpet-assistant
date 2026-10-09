@@ -7,6 +7,8 @@ const londonBridge: Score = {
   id: "london-bridge",
   title: "London Bridge",
   composer: "Traditional",
+  tags: ["traditional"],
+  difficulty: "easy",
   tempo: 100,
   signature: [4, 4],
   notes: [

@@ -6,6 +6,8 @@ const { C, D, E, F, G, A } = Note;
 const frereJacques: Score = {
   id: "frere-jacques",
   title: "Frere Jacques",
+  tags: ["traditional"],
+  difficulty: "easy",
   tempo: 120,
   signature: [4, 4],
   notes: [

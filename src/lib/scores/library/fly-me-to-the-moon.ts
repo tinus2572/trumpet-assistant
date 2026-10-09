@@ -7,6 +7,8 @@ const flyMeToTheMoon: Score = {
   id: "fly-me-to-the-moon",
   title: "Fly Me to the Moon",
   composer: "Bart Howard",
+  tags: ["jazz"],
+  difficulty: "hard",
   tempo: 100,
   signature: [4, 4],
   notes: [

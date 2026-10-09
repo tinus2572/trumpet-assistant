@@ -7,6 +7,8 @@ const auClairDeLaLune: Score = {
   id: "au-clair-de-la-lune",
   title: "Au Clair de la Lune",
   composer: "Jean-Baptiste Lully",
+  tags: ["traditional"],
+  difficulty: "easy",
   tempo: 100,
   signature: [4, 4],
   notes: [

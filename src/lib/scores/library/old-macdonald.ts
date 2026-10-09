@@ -7,6 +7,8 @@ const oldMacdonald: Score = {
   id: "old-macdonald",
   title: "Old MacDonald",
   composer: "Traditional",
+  tags: ["traditional"],
+  difficulty: "easy",
   tempo: 110,
   signature: [4, 4],
   notes: [
