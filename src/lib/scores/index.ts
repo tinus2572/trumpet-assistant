@@ -20,6 +20,7 @@ import flyMeToTheMoon from "./library/fly-me-to-the-moon";
 import summertime from "./library/summertime";
 import whenTheSaints from "./library/when-the-saints";
 import autumnLeaves from "./library/autumn-leaves";
+import laMarseillaise from "./library/la-marseillaise";
 
 export * from "./types";
 export * from "./timing";
@@ -38,6 +39,7 @@ export const SCORES: Score[] = [
   viveLeVent,
   frereJacques,
   odeALaJoie,
+  laMarseillaise,
   happyBirthday,
   flyMeToTheMoon,
   summertime,

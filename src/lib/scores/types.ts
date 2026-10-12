@@ -12,6 +12,8 @@ export interface ScoreNote {
   duration: number;
   // Rest before the note (in beats), 0 by default
   rest?: number;
+  // Start a new staff line at the measure holding this note (e.g. to keep a phrase together)
+  lineBreak?: boolean;
 }
 
 export const SCORE_TAGS = ["jazz", "traditional", "classical", "exercise"] as const;

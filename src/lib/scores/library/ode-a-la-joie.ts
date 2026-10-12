@@ -61,7 +61,7 @@ const odeALaJoie: Score = {
     { note: D, octave: 4, duration: 1 },
     { note: G, octave: 3, duration: 2 },
     // Phrase A'
-    { note: E, octave: 4, duration: 1 },
+    { note: E, octave: 4, duration: 1, lineBreak: true },
     { note: E, octave: 4, duration: 1 },
     { note: F, octave: 4, duration: 1 },
     { note: G, octave: 4, duration: 1 },

@@ -88,6 +88,8 @@ interface MeasureData {
   vexNotes: StaveNote[];
   beamGroups: StaveNote[][];
   tupletGroups: StaveNote[][];
+  // Forced to start a new staff line (from the score's lineBreak marks)
+  lineBreak?: boolean;
 }
 
 interface MeasureResult {
@@ -151,6 +153,7 @@ function buildScoreMeasures(
   let beamGroups: StaveNote[][] = [];
   let tupletGroup: StaveNote[] = [];
   let tupletGroups: StaveNote[][] = [];
+  let lineBreak = false;
 
   const flushMeasure = () => {
     if (beamGroup.length >= 2) beamGroups.push([...beamGroup]);
@@ -162,7 +165,9 @@ function buildScoreMeasures(
       vexNotes: [...measureVexNotes],
       beamGroups: [...beamGroups],
       tupletGroups: [...tupletGroups],
+      lineBreak,
     });
+    lineBreak = false;
     measureNoteIndices = [];
     measureVexNotes = [];
     beamGroups = [];
@@ -202,6 +207,7 @@ function buildScoreMeasures(
     if (sn.rest && sn.rest > 0) {
       addRest(sn.rest);
     }
+    if (sn.lineBreak) lineBreak = true;
 
     const key = toVexKey(pn.note.writtenNote, pn.note.writtenOctave);
     const remaining = beatsPerMeasure - currentBeat;
@@ -483,7 +489,8 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
     let lineWidth = 0;
     for (let mi = 0; mi < measures.length; mi++) {
       const w = measureWidth(mi, currentLine.length === 0);
-      if (lineWidth + w > availWidth && currentLine.length > 0) {
+      const forced = measures[mi].lineBreak;
+      if ((forced || lineWidth + w > availWidth) && currentLine.length > 0) {
         lines.push(currentLine);
         currentLine = [mi];
         lineWidth = measureWidth(mi, true);
@@ -494,11 +501,12 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
     }
     if (currentLine.length > 0) lines.push(currentLine);
 
-    // Justify: stretch each line's note areas to fill the width (the last line only if mostly full)
+    // Justify: stretch each line's note areas to fill the width
+    // (lines ended early, the last one or one before a forced break, only if mostly full)
     const stretch = lines.map((line, lineIdx) => {
       const natural = line.reduce((sum, mi, k) => sum + measureWidth(mi, k === 0), 0);
-      const isLast = lineIdx === lines.length - 1;
-      if (isLast && natural < availWidth * 0.7) return 1;
+      const endsEarly = lineIdx === lines.length - 1 || measures[lines[lineIdx + 1][0]].lineBreak;
+      if (endsEarly && natural < availWidth * 0.7) return 1;
       const notes = line.reduce((sum, mi) => sum + prepared[mi].noteArea, 0);
       return Math.max(1, (notes + availWidth - natural - 1) / notes);
     });
