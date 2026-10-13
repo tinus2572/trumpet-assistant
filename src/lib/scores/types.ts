@@ -16,7 +16,7 @@ export interface ScoreNote {
   lineBreak?: boolean;
 }
 
-export const SCORE_TAGS = ["jazz", "traditional", "classical", "exercise"] as const;
+export const SCORE_TAGS = ["jazz", "traditional", "classical", "christmas", "exercise"] as const;
 export type ScoreTag = (typeof SCORE_TAGS)[number];
 
 export const DIFFICULTIES = ["easy", "medium", "hard", "impossible"] as const;

@@ -29,7 +29,7 @@ Color carries meaning; keep it consistent.
 - `mint`: success, "mic on", in tune.
 - `sky`: info and the open score's header. `pink`: secondary playful action (3… 2… 1…).
 - Difficulty: easy `mint`, medium `sun`, hard `tomato`, impossible `ink` with white text.
-- Labels: jazz `pink`, traditional `sky`, classical `grape`, exercise `muted`.
+- Labels: jazz `pink`, traditional `sky`, classical `grape`, christmas `mint`, exercise `muted`.
 - Pitch accuracy keeps the `evaluatePitch` colors (green to red).
 
 ## Canvas (TileView)

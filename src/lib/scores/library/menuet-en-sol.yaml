@@ -1,0 +1,72 @@
+id: menuet-en-sol
+title: Menuet en Sol
+composer: Christian Petzold
+tags: [classical]
+difficulty: medium
+tempo: 100
+signature: [3, 4]
+notes:
+  - { note: D, octave: 5, duration: 1 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: E, octave: 5, duration: 1 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: D, octave: 5, duration: 0.5 }
+  - { note: E, octave: 5, duration: 0.5 }
+  - { note: F#, octave: 5, duration: 0.5 }
+  - { note: G, octave: 5, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: D, octave: 5, duration: 0.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: F#, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 3 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: E, octave: 5, duration: 1 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: D, octave: 5, duration: 0.5 }
+  - { note: E, octave: 5, duration: 0.5 }
+  - { note: F#, octave: 5, duration: 0.5 }
+  - { note: G, octave: 5, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: D, octave: 5, duration: 0.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: F#, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 3 }

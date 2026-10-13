@@ -1,0 +1,22 @@
+id: gamme-fa-majeur
+title: Gamme de Fa Majeur
+tags: [exercise]
+difficulty: easy
+tempo: 80
+signature: [4, 4]
+notes:
+  - { note: F, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: A#, octave: 4, duration: 1 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: E, octave: 5, duration: 1 }
+  - { note: F, octave: 5, duration: 1 }
+  - { note: E, octave: 5, duration: 1 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: A#, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 2 }

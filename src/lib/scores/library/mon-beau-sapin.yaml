@@ -1,0 +1,54 @@
+id: mon-beau-sapin
+title: Mon Beau Sapin
+tags: [christmas, traditional]
+difficulty: easy
+tempo: 90
+signature: [3, 4]
+pickup: 1
+notes:
+  - { note: D, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 0.75 }
+  - { note: G, octave: 4, duration: 0.25 }
+  - { note: G, octave: 4, duration: 1.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.75 }
+  - { note: B, octave: 4, duration: 0.25 }
+  - { note: B, octave: 4, duration: 1.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: F#, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: D, octave: 5, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: E, octave: 5, duration: 1.5 }
+  - { note: D, octave: 5, duration: 0.5 }
+  - { note: D, octave: 5, duration: 0.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: C, octave: 5, duration: 1.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: D, octave: 5, duration: 1.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 0.75 }
+  - { note: G, octave: 4, duration: 0.25 }
+  - { note: G, octave: 4, duration: 1.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.75 }
+  - { note: B, octave: 4, duration: 0.25 }
+  - { note: B, octave: 4, duration: 1.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: F#, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }

@@ -1,0 +1,59 @@
+id: canon-pachelbel
+title: Canon en Ré
+composer: Johann Pachelbel
+tags: [classical]
+difficulty: medium
+tempo: 70
+signature: [4, 4]
+notes:
+  # Theme in half notes
+  - { note: E, octave: 5, duration: 2 }
+  - { note: D, octave: 5, duration: 2 }
+  - { note: C, octave: 5, duration: 2 }
+  - { note: B, octave: 4, duration: 2 }
+  - { note: A, octave: 4, duration: 2 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: A, octave: 4, duration: 2 }
+  - { note: B, octave: 4, duration: 2 }
+  - { note: C, octave: 5, duration: 2 }
+  - { note: B, octave: 4, duration: 2 }
+  - { note: A, octave: 4, duration: 2 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: F, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 2 }
+  - { note: F, octave: 4, duration: 2 }
+  - { note: D, octave: 4, duration: 2 }
+  # Quarter-note variation
+  - { note: C, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: A, octave: 3, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: A, octave: 3, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 4 }

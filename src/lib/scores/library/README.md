@@ -8,7 +8,7 @@ A mistake in a file (unknown note, wrong difficulty…) fails the page with a me
 id: hot-cross-buns           # must match the file name
 title: Hot Cross Buns
 composer: Traditional        # optional
-tags: [traditional]          # jazz, traditional, classical, exercise
+tags: [traditional]          # jazz, traditional, classical, christmas, exercise
 difficulty: easy             # easy, medium, hard, impossible
 tempo: 90                    # BPM, quarter notes per minute
 signature: [4, 4]

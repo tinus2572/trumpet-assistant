@@ -1,0 +1,45 @@
+# 3/8 written as 3/4 with doubled note values.
+id: lettre-a-elise
+title: Lettre à Élise
+composer: Beethoven
+tags: [classical]
+difficulty: medium
+tempo: 100
+signature: [3, 4]
+pickup: 1
+notes:
+  - { note: E, octave: 5, duration: 0.5 }
+  - { note: D#, octave: 5, duration: 0.5 }
+  - { note: E, octave: 5, duration: 0.5 }
+  - { note: D#, octave: 5, duration: 0.5 }
+  - { note: E, octave: 5, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: D, octave: 5, duration: 0.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 0.5, rest: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 0.5, rest: 0.5 }
+  - { note: G#, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: E, octave: 4, duration: 0.5, rest: 0.5 }
+  - { note: E, octave: 5, duration: 0.5 }
+  - { note: D#, octave: 5, duration: 0.5 }
+  - { note: E, octave: 5, duration: 0.5 }
+  - { note: D#, octave: 5, duration: 0.5 }
+  - { note: E, octave: 5, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: D, octave: 5, duration: 0.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 0.5, rest: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 0.5, rest: 0.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 2 }

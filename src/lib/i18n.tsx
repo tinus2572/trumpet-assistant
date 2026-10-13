@@ -113,6 +113,10 @@ const translations = {
   "library.fold": { fr: "Replier", en: "Fold" },
   "library.unfold": { fr: "Afficher les partitions", en: "Show scores" },
   "library.clearFilters": { fr: "Effacer les filtres", en: "Clear filters" },
+  "filter.or": { fr: "OU", en: "OR" },
+  "filter.and": { fr: "ET", en: "AND" },
+  "filter.orTitle": { fr: "Au moins un des labels choisis", en: "Any of the selected labels" },
+  "filter.andTitle": { fr: "Tous les labels choisis", en: "All of the selected labels" },
   "sort.label": { fr: "Trier :", en: "Sort:" },
   "sort.title": { fr: "Titre", en: "Title" },
   "sort.difficulty": { fr: "Difficult\u00E9", en: "Difficulty" },
@@ -123,6 +127,7 @@ const translations = {
   "tag.jazz": { fr: "Jazz", en: "Jazz" },
   "tag.traditional": { fr: "Traditionnel", en: "Traditional" },
   "tag.classical": { fr: "Classique", en: "Classical" },
+  "tag.christmas": { fr: "No\u00EBl", en: "Christmas" },
   "tag.exercise": { fr: "Exercice", en: "Exercise" },
 
   // Difficulty

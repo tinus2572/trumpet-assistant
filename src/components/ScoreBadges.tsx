@@ -15,6 +15,7 @@ export const TAG_STYLE: Record<ScoreTag, string> = {
   jazz: "bg-pink",
   traditional: "bg-sky",
   classical: "bg-grape",
+  christmas: "bg-mint",
   exercise: "bg-muted",
 };
 

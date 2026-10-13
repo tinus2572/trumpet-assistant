@@ -1,0 +1,17 @@
+id: notes-longues
+title: Notes Longues
+tags: [exercise]
+difficulty: easy
+tempo: 60
+signature: [4, 4]
+notes:
+  # Hold each note steady for 4 beats, breathe during the rest
+  - { note: C, octave: 4, duration: 4 }
+  - { note: D, octave: 4, duration: 4, rest: 4 }
+  - { note: E, octave: 4, duration: 4, rest: 4 }
+  - { note: F, octave: 4, duration: 4, rest: 4 }
+  - { note: G, octave: 4, duration: 4, rest: 4 }
+  - { note: F, octave: 4, duration: 4, rest: 4 }
+  - { note: E, octave: 4, duration: 4, rest: 4 }
+  - { note: D, octave: 4, duration: 4, rest: 4 }
+  - { note: C, octave: 4, duration: 4, rest: 4 }

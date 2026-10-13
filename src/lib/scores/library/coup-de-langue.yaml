@@ -1,0 +1,53 @@
+id: coup-de-langue
+title: Coup de Langue
+tags: [exercise]
+difficulty: easy
+tempo: 80
+signature: [4, 4]
+notes:
+  # Short, even tongued eighths, then a held note
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 2 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 2 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 2 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 2 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 2 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 2 }

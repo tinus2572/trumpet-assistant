@@ -1,0 +1,30 @@
+id: largo-nouveau-monde
+title: Largo (Nouveau Monde)
+composer: Antonín Dvořák
+tags: [classical]
+difficulty: easy
+tempo: 60
+signature: [4, 4]
+notes:
+  - { note: E, octave: 4, duration: 1.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 1.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 2 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 4 }
+  - { note: E, octave: 4, duration: 1.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 1.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 2 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 4 }

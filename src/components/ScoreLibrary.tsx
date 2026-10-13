@@ -40,6 +40,8 @@ export default function ScoreLibrary({
   const { t } = useI18n();
   const [search, setSearch] = useState("");
   const [tags, setTags] = useState<Set<ScoreTag>>(new Set());
+  // "or": a score needs any selected label, "and": it needs all of them
+  const [tagMode, setTagMode] = useState<"or" | "and">("or");
   const [levels, setLevels] = useState<Set<Difficulty>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; asc: boolean }>({ key: "difficulty", asc: true });
 
@@ -47,7 +49,10 @@ export default function ScoreLibrary({
     const q = normalize(search.trim());
     const filtered = scores.filter((s) => {
       if (q && !normalize(`${s.title} ${s.composer ?? ""}`).includes(q)) return false;
-      if (tags.size > 0 && !s.tags.some((tag) => tags.has(tag))) return false;
+      if (tags.size > 0) {
+        const has = (tag: ScoreTag) => s.tags.includes(tag);
+        if (tagMode === "and" ? ![...tags].every(has) : ![...tags].some(has)) return false;
+      }
       if (levels.size > 0 && !levels.has(effectiveDifficulty(s, overrides))) return false;
       return true;
     });
@@ -65,7 +70,7 @@ export default function ScoreLibrary({
       const cmp = va < vb ? -1 : va > vb ? 1 : normalize(a.title).localeCompare(normalize(b.title));
       return sort.asc ? cmp : -cmp;
     });
-  }, [scores, search, tags, levels, sort, overrides]);
+  }, [scores, search, tags, tagMode, levels, sort, overrides]);
 
   if (folded) {
     return (
@@ -122,6 +127,20 @@ export default function ScoreLibrary({
               {t(`tag.${tag}`)}
             </button>
           ))}
+          <div className="inline-flex border-2 border-ink rounded-nb overflow-hidden bg-card text-xs font-bold">
+            {(["or", "and"] as const).map((mode, i) => (
+              <button
+                key={mode}
+                onClick={() => setTagMode(mode)}
+                title={t(`filter.${mode}Title`)}
+                className={`px-2 py-0.5 transition-colors ${i > 0 ? "border-l-2 border-ink" : ""} ${
+                  tagMode === mode ? "bg-sun" : "hover:bg-muted"
+                }`}
+              >
+                {t(`filter.${mode}`)}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {DIFFICULTIES.map((d) => (

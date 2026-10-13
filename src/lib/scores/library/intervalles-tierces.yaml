@@ -1,0 +1,37 @@
+id: intervalles-tierces
+title: Intervalles en Tierces
+tags: [exercise]
+difficulty: medium
+tempo: 80
+signature: [4, 4]
+notes:
+  - { note: C, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: C, octave: 5, duration: 2 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: B, octave: 3, duration: 1 }
+  - { note: C, octave: 4, duration: 2 }

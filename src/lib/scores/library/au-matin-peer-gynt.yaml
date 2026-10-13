@@ -1,0 +1,57 @@
+# 6/8 written as 3/4 (two eighth-note groups per bar).
+id: au-matin-peer-gynt
+title: Au Matin (Peer Gynt)
+composer: Edvard Grieg
+tags: [classical]
+difficulty: easy
+tempo: 90
+signature: [3, 4]
+notes:
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.25 }
+  - { note: E, octave: 4, duration: 0.25 }
+  - { note: D, octave: 4, duration: 0.25 }
+  - { note: E, octave: 4, duration: 0.25 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 1.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.25 }
+  - { note: E, octave: 4, duration: 0.25 }
+  - { note: D, octave: 4, duration: 0.25 }
+  - { note: E, octave: 4, duration: 0.25 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 1.5 }

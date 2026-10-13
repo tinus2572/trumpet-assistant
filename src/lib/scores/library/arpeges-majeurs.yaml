@@ -1,0 +1,39 @@
+id: arpeges-majeurs
+title: Arpèges Majeurs
+tags: [exercise]
+difficulty: medium
+tempo: 80
+signature: [4, 4]
+notes:
+  # Do majeur
+  - { note: C, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 2 }
+  # Fa majeur
+  - { note: F, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: F, octave: 5, duration: 1 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 2 }
+  # Sol majeur
+  - { note: G, octave: 4, duration: 1 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: G, octave: 5, duration: 1 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 2 }
+  # Do majeur
+  - { note: C, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 2 }
