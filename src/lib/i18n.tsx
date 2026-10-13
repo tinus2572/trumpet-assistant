@@ -113,6 +113,7 @@ const translations = {
   "library.fold": { fr: "Replier", en: "Fold" },
   "library.unfold": { fr: "Afficher les partitions", en: "Show scores" },
   "library.clearFilters": { fr: "Effacer les filtres", en: "Clear filters" },
+  "filter.labels": { fr: "Labels :", en: "Labels:" },
   "filter.or": { fr: "OU", en: "OR" },
   "filter.and": { fr: "ET", en: "AND" },
   "filter.orTitle": { fr: "Au moins un des labels choisis", en: "Any of the selected labels" },

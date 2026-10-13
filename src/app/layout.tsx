@@ -28,6 +28,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
+      // Browser extensions add attributes to <html> before hydration
+      suppressHydrationWarning
       lang="fr"
       className={`${spaceGrotesk.variable} ${archivoBlack.variable} ${spaceMono.variable} h-full antialiased`}
     >

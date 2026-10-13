@@ -117,27 +117,32 @@ export default function ScoreLibrary({
           placeholder={t("scores.search")}
           className="nb-input text-sm"
         />
-        <div className="flex flex-wrap gap-1.5">
-          {SCORE_TAGS.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => setTags((s) => toggled(s, tag))}
-              className={`nb-chip ${tags.has(tag) ? `${TAG_STYLE[tag]} shadow-nb-sm` : inactiveChip}`}
-            >
-              {t(`tag.${tag}`)}
-            </button>
-          ))}
-          <div className="inline-flex border-2 border-ink rounded-nb overflow-hidden bg-card text-xs font-bold">
-            {(["or", "and"] as const).map((mode, i) => (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold mr-0.5">{t("filter.labels")}</span>
+            <div className="inline-flex border-2 border-ink rounded-nb overflow-hidden bg-card text-xs font-bold">
+              {(["or", "and"] as const).map((mode, i) => (
+                <button
+                  key={mode}
+                  onClick={() => setTagMode(mode)}
+                  title={t(`filter.${mode}Title`)}
+                  className={`px-2 py-0.5 transition-colors ${i > 0 ? "border-l-2 border-ink" : ""} ${
+                    tagMode === mode ? "bg-sun" : "hover:bg-muted"
+                  }`}
+                >
+                  {t(`filter.${mode}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {SCORE_TAGS.map((tag) => (
               <button
-                key={mode}
-                onClick={() => setTagMode(mode)}
-                title={t(`filter.${mode}Title`)}
-                className={`px-2 py-0.5 transition-colors ${i > 0 ? "border-l-2 border-ink" : ""} ${
-                  tagMode === mode ? "bg-sun" : "hover:bg-muted"
-                }`}
+                key={tag}
+                onClick={() => setTags((s) => toggled(s, tag))}
+                className={`nb-chip ${tags.has(tag) ? `${TAG_STYLE[tag]} shadow-nb-sm` : inactiveChip}`}
               >
-                {t(`filter.${mode}`)}
+                {t(`tag.${tag}`)}
               </button>
             ))}
           </div>
