@@ -23,7 +23,7 @@ import Staff from "./Staff";
 import History from "./History";
 import ScorePlayer, { ScoreView } from "./PartitionPlayer";
 import ScoreLibrary from "./ScoreLibrary";
-import { SCORES } from "@/lib/scores";
+import { Score } from "@/lib/scores";
 import {
   effectiveDifficulty,
   setDifficultyOverride,
@@ -50,7 +50,7 @@ function saveHistory(recordings: Recording[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(recordings));
 }
 
-export default function TrumpetAnalyzer() {
+export default function TrumpetAnalyzer({ scores }: { scores: Score[] }) {
   const { t, lang } = useI18n();
   const langRef = useRef(lang);
   useEffect(() => { langRef.current = lang; }, [lang]);
@@ -421,7 +421,7 @@ export default function TrumpetAnalyzer() {
   })();
 
   const micReady = micState === "ready";
-  const selectedScore = SCORES.find((s) => s.id === selectedScoreId) ?? null;
+  const selectedScore = scores.find((s) => s.id === selectedScoreId) ?? null;
 
   return (
     <div className="min-h-screen text-ink">
@@ -465,7 +465,7 @@ export default function TrumpetAnalyzer() {
 
         <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
           <ScoreLibrary
-            scores={SCORES}
+            scores={scores}
             selectedId={selectedScoreId}
             onSelect={(score) => setSelectedScoreId(score.id)}
             overrides={difficultyOverrides}

@@ -1,0 +1,72 @@
+id: ode-a-la-joie
+title: Ode a la Joie
+composer: Beethoven
+tags: [classical]
+difficulty: easy
+tempo: 100
+signature: [4, 4]
+notes:
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1.5 }
+  - { note: D, octave: 4, duration: 0.5 }
+  - { note: D, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 2 }
+  # Phrase B
+  - { note: D, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: G, octave: 3, duration: 2 }
+  # Phrase A'
+  - { note: E, octave: 4, duration: 1, lineBreak: true }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1.5 }
+  - { note: C, octave: 4, duration: 0.5 }
+  - { note: C, octave: 4, duration: 2 }

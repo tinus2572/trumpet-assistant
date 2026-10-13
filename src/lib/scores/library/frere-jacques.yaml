@@ -1,0 +1,73 @@
+id: frere-jacques
+title: Frere Jacques
+tags: [traditional]
+difficulty: easy
+tempo: 120
+signature: [4, 4]
+notes:
+  # Verse 1
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: G, octave: 3, duration: 1 }
+  - { note: C, octave: 4, duration: 2 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: G, octave: 3, duration: 1 }
+  - { note: C, octave: 4, duration: 2 }
+  # Verse 2
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: F, octave: 4, duration: 0.5 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: G, octave: 3, duration: 1 }
+  - { note: C, octave: 4, duration: 2 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: G, octave: 3, duration: 1 }
+  - { note: C, octave: 4, duration: 2 }

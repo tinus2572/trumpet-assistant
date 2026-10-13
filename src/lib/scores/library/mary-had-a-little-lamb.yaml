@@ -1,0 +1,61 @@
+id: mary-had-a-little-lamb
+title: Mary Had a Little Lamb
+tags: [traditional]
+difficulty: easy
+tempo: 100
+signature: [4, 4]
+notes:
+  # Verse 1
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 2 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 4 }
+  # Verse 2
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 2 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: D, octave: 4, duration: 1 }
+  - { note: C, octave: 4, duration: 4 }

@@ -1,0 +1,119 @@
+id: la-marseillaise
+title: La Marseillaise
+composer: Rouget de Lisle
+tags: [traditional]
+difficulty: medium
+tempo: 80
+signature: [4, 4]
+pickup: 1.25
+notes:
+  # Allons enfants de la Patrie, le jour de gloire est arrivé
+  - { note: D, octave: 4, duration: 0.25 }
+  - { note: D, octave: 4, duration: 0.75 }
+  - { note: D, octave: 4, duration: 0.25 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: D, octave: 5, duration: 1.5 }
+  - { note: B, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.25, rest: 0.25 }
+  - { note: B, octave: 4, duration: 0.75 }
+  - { note: G, octave: 4, duration: 0.25 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: C, octave: 5, duration: 2 }
+  - { note: A, octave: 4, duration: 0.75 }
+  - { note: F#, octave: 4, duration: 0.25 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: G, octave: 4, duration: 0.75, rest: 1 }
+  # Contre nous de la tyrannie, l'étendard sanglant est levé
+  - { note: A, octave: 4, duration: 0.25 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: C, octave: 5, duration: 0.75 }
+  - { note: B, octave: 4, duration: 0.25 }
+  - { note: B, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: A, octave: 4, duration: 0.75, rest: 1 }
+  - { note: B, octave: 4, duration: 0.25 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: D, octave: 5, duration: 0.75 }
+  - { note: C, octave: 5, duration: 0.25 }
+  - { note: B, octave: 4, duration: 2 }
+  - { note: D, octave: 5, duration: 0.75, rest: 1 }
+  - { note: D, octave: 5, duration: 0.25 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: B, octave: 4, duration: 0.75 }
+  - { note: G, octave: 4, duration: 0.25 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: B, octave: 4, duration: 0.75 }
+  - { note: G, octave: 4, duration: 0.25 }
+  - { note: D, octave: 4, duration: 2 }
+  - { note: D, octave: 4, duration: 0.25, rest: 0.75 }
+  # Entendez-vous dans les campagnes mugir ces féroces soldats ?
+  - { note: D, octave: 4, duration: 0.75 }
+  - { note: F#, octave: 4, duration: 0.25 }
+  - { note: A, octave: 4, duration: 2 }
+  - { note: C, octave: 5, duration: 1 }
+  - { note: A, octave: 4, duration: 0.75 }
+  - { note: F#, octave: 4, duration: 0.25 }
+  - { note: A, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F, octave: 4, duration: 2 }
+  - { note: E, octave: 4, duration: 1 }
+  - { note: G, octave: 4, duration: 0.75 }
+  - { note: G, octave: 4, duration: 0.25 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F#, octave: 4, duration: 0.75 }
+  - { note: G, octave: 4, duration: 0.25 }
+  - { note: A, octave: 4, duration: 3 }
+  - { note: A, octave: 4, duration: 0.5, rest: 0.5 }
+  - { note: A#, octave: 4, duration: 1.5 }
+  - { note: A#, octave: 4, duration: 0.5 }
+  - { note: A#, octave: 4, duration: 0.5 }
+  - { note: A#, octave: 4, duration: 0.5 }
+  - { note: C, octave: 5, duration: 0.5 }
+  - { note: D, octave: 5, duration: 0.5 }
+  - { note: A, octave: 4, duration: 3 }
+  - { note: A#, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 1.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: A#, octave: 4, duration: 0.5 }
+  - { note: A, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 0.5 }
+  - { note: G, octave: 4, duration: 1 }
+  - { note: F#, octave: 4, duration: 0.5 }
+  # Aux armes, citoyens ! Formez vos bataillons !
+  - { note: D, octave: 5, duration: 0.25, rest: 2.25 }
+  - { note: D, octave: 5, duration: 2.75, lineBreak: true }
+  - { note: D, octave: 5, duration: 0.25 }
+  - { note: B, octave: 4, duration: 0.75 }
+  - { note: G, octave: 4, duration: 0.25 }
+  - { note: A, octave: 4, duration: 3 }
+  - { note: D, octave: 5, duration: 0.25, rest: 0.75 }
+  - { note: D, octave: 5, duration: 2.75 }
+  - { note: D, octave: 5, duration: 0.25 }
+  - { note: B, octave: 4, duration: 0.75 }
+  - { note: G, octave: 4, duration: 0.25 }
+  - { note: A, octave: 4, duration: 2.5 }
+  # Marchons, marchons ! Qu'un sang impur abreuve nos sillons !
+  - { note: D, octave: 4, duration: 1, rest: 0.5 }
+  - { note: G, octave: 4, duration: 2 }
+  - { note: A, octave: 4, duration: 1, rest: 1 }
+  - { note: B, octave: 4, duration: 2 }
+  - { note: C, octave: 5, duration: 2, rest: 2 }
+  - { note: D, octave: 5, duration: 1 }
+  - { note: E, octave: 5, duration: 1 }
+  - { note: A, octave: 4, duration: 2.5 }
+  - { note: E, octave: 5, duration: 1, rest: 0.5 }
+  - { note: D, octave: 5, duration: 2.75 }
+  - { note: B, octave: 4, duration: 0.25 }
+  - { note: C, octave: 5, duration: 0.75 }
+  - { note: A, octave: 4, duration: 0.25 }
+  - { note: G, octave: 4, duration: 2 }
