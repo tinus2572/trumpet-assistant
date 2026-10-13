@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Recording, evaluatePitch } from "@/lib/trumpet";
 import { useI18n } from "@/lib/i18n";
 import Staff from "./Staff";
@@ -11,6 +11,7 @@ interface HistoryProps {
   audioUrls: Record<string, string>;
   onSelect: (e: Recording) => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, title: string) => void;
   onTrim: (id: string, start: number, end: number) => Promise<void>;
   selectionId: string | null;
   onPlaybackTime: (t: number | null) => void;
@@ -22,6 +23,7 @@ export default function History({
   audioUrls,
   onSelect,
   onDelete,
+  onRename,
   onTrim,
   selectionId,
   onPlaybackTime,
@@ -30,6 +32,9 @@ export default function History({
   const { t, dn } = useI18n();
   const [trimId, setTrimId] = useState<string | null>(null);
   const [trimming, setTrimming] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  // Set by Escape so the blur that follows doesn't save
+  const cancelEditRef = useRef(false);
 
   const handleTimeUpdate = useCallback(
     (ev: React.SyntheticEvent<HTMLAudioElement>) => {
@@ -79,8 +84,54 @@ export default function History({
             }`}
           >
             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-bold">{e.date}</p>
+              <div className="min-w-0 flex-1 mr-3">
+                {editingId === e.id ? (
+                  <input
+                    autoFocus
+                    defaultValue={e.title ?? ""}
+                    placeholder={t("history.titlePlaceholder")}
+                    maxLength={80}
+                    onClick={(ev) => ev.stopPropagation()}
+                    onKeyDown={(ev) => {
+                      if (ev.key === "Enter") ev.currentTarget.blur();
+                      if (ev.key === "Escape") {
+                        // Keep Escape from also closing the history dialog
+                        ev.stopPropagation();
+                        cancelEditRef.current = true;
+                        ev.currentTarget.blur();
+                      }
+                    }}
+                    onBlur={(ev) => {
+                      if (!cancelEditRef.current) onRename(e.id, ev.currentTarget.value);
+                      cancelEditRef.current = false;
+                      setEditingId(null);
+                    }}
+                    className="nb-input text-sm py-1 max-w-sm"
+                  />
+                ) : (
+                  <button
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      setEditingId(e.id);
+                    }}
+                    title={t("history.rename")}
+                    className="text-left text-sm font-bold hover:underline decoration-2 underline-offset-2"
+                  >
+                    {e.title || <span className="text-ink/50 italic">{t("history.untitled")}</span>}
+                    <span className="ml-1.5 text-ink/50">✎</span>
+                  </button>
+                )}
+                <p className="text-xs font-medium text-ink/60 mt-1 flex items-center gap-1.5 flex-wrap">
+                  {e.date}
+                  {e.score && (
+                    <span
+                      title={t("history.score")}
+                      className="inline-block text-[10px] font-bold text-ink px-1.5 py-px bg-sky border-2 border-ink rounded-md"
+                    >
+                      🎼 {e.score.title}
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs font-medium text-ink/60 mt-1">
                   {e.summary.totalNotes} {e.summary.totalNotes > 1 ? t("note.plural") : t("note.singular")} {t("history.detected")}
                   {" · "}

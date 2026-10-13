@@ -138,11 +138,13 @@ interface TileViewProps {
   score: Score;
   /** performance.now() timestamp at which the score's first beat reaches the hit line; null when idle */
   origin: number | null;
+  /** Position in seconds while paused: the tiles freeze there */
+  pausedAt?: number | null;
   liveNote: NoteInfo | null;
   micActive: boolean;
 }
 
-export default function TileView({ score, origin, liveNote, micActive }: TileViewProps) {
+export default function TileView({ score, origin, pausedAt = null, liveNote, micActive }: TileViewProps) {
   const { t, dn } = useI18n();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -248,8 +250,8 @@ export default function TileView({ score, origin, liveNote, micActive }: TileVie
       const colW = width / keys.length;
       const hitY = HEIGHT - KEY_HEIGHT;
       const pxPerSec = hitY / TILE_LOOKAHEAD;
-      const running = origin !== null;
-      const time = running ? (nowMs - origin) / 1000 : -TILE_LOOKAHEAD;
+      const running = origin !== null || pausedAt !== null;
+      const time = pausedAt ?? (origin !== null ? (nowMs - origin) / 1000 : -TILE_LOOKAHEAD);
       const dt = lastTime === null ? 0 : Math.min(0.1, time - lastTime);
       lastTime = running ? time : null;
       const finished = running && time > totalSec + HIT_TOLERANCE;
@@ -506,7 +508,7 @@ export default function TileView({ score, origin, liveNote, micActive }: TileVie
       cancelAnimationFrame(raf);
       ro.disconnect();
     };
-  }, [origin, notes, totalSec, measureTimes, columns]);
+  }, [origin, pausedAt, notes, totalSec, measureTimes, columns]);
 
   return (
     <div className="border-2 border-ink rounded-nb overflow-hidden">

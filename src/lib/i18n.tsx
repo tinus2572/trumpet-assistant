@@ -8,14 +8,8 @@ export type Lang = "fr" | "en";
 const translations = {
   // Header
   "app.title": { fr: "Assistant Trompette", en: "Trumpet Assistant" },
-  "app.subtitle": {
-    fr: "Analyseur de justesse pour trompette en Si\u266D",
-    en: "Pitch analyzer for B\u266D trumpet",
-  },
 
   // Mic & recording controls
-  "mic.listening": { fr: "Micro actif", en: "Mic on" },
-  "mic.starting": { fr: "D\u00E9marrage du micro\u2026", en: "Starting mic\u2026" },
   "mic.clickToStart": {
     fr: "Cliquez n'importe o\u00F9 pour activer l'\u00E9coute du micro.",
     en: "Click anywhere to start listening to the mic.",
@@ -39,12 +33,12 @@ const translations = {
   "range.title": { fr: "Tessiture", en: "Range" },
 
   // Staff
-  "staff.title": { fr: "Port\u00E9e", en: "Staff" },
-  "staff.playing": { fr: "Lecture", en: "Playing" },
   "staff.emptyLive": { fr: "Les notes appara\u00EEtront ici...", en: "Notes will appear here..." },
   "staff.emptyReplay": { fr: "Aucune note", en: "No notes" },
 
   // History
+  "history.button": { fr: "Historique", en: "History" },
+  "history.close": { fr: "Fermer", en: "Close" },
   "history.title": { fr: "Historique des sessions", en: "Session history" },
   "history.clearAll": { fr: "Tout effacer", en: "Clear all" },
   "history.empty1": { fr: "Aucun enregistrement pour le moment.", en: "No recordings yet." },
@@ -55,6 +49,10 @@ const translations = {
   "history.detected": { fr: "d\u00E9tect\u00E9e(s)", en: "detected" },
   "history.duration": { fr: "Dur\u00E9e", en: "Duration" },
   "history.avgPitch": { fr: "Justesse moy.", en: "Avg. pitch" },
+  "history.untitled": { fr: "Sans titre", en: "Untitled" },
+  "history.rename": { fr: "Donner un titre", en: "Give it a title" },
+  "history.titlePlaceholder": { fr: "Titre de l\u2019enregistrement", en: "Recording title" },
+  "history.score": { fr: "Partition ouverte pendant l\u2019enregistrement", en: "Score open during the recording" },
   "history.delete": { fr: "Supprimer", en: "Delete" },
   "history.trim": { fr: "D\u00E9couper", en: "Trim" },
   "history.trimming": { fr: "D\u00E9coupage en cours...", en: "Trimming..." },
@@ -78,17 +76,17 @@ const translations = {
   "scores.listen": { fr: "\u00C9couter", en: "Listen" },
   "scores.listenCountdown": { fr: "\u00C9couter apr\u00E8s d\u00E9compte", en: "Listen after countdown" },
   "scores.stop": { fr: "Arr\u00EAter", en: "Stop" },
+  "scores.fullscreen": { fr: "Plein \u00E9cran", en: "Full screen" },
+  "scores.exitFullscreen": { fr: "Quitter le plein \u00E9cran", en: "Exit full screen" },
+  "scores.pause": { fr: "Pause", en: "Pause" },
+  "scores.resume": { fr: "Reprendre", en: "Resume" },
+  "scores.seek": { fr: "Position dans la partition", en: "Position in the score" },
   "scores.muted": { fr: "Muet", en: "Muted" },
   "scores.sound": { fr: "Son", en: "Sound" },
   "scores.close": { fr: "Fermer la partition", en: "Close score" },
   "scores.empty": {
     fr: "Choisissez une partition dans la biblioth\u00E8que pour la jouer.",
     en: "Pick a score from the library to play it.",
-  },
-  "scores.howTo": { fr: "Comment jouer :", en: "How to play:" },
-  "scores.instructions": {
-    fr: "\u00C9coutez d'abord la partition, puis rejouez par-dessus : la note que vous jouez est surlign\u00E9e sur la port\u00E9e. Coupez le son pour jouer sans guide.",
-    en: "Listen to the score first, then play along: the note you play is highlighted on the staff. Mute the sound to play without a guide.",
   },
 
   "scores.viewSheet": { fr: "Partition", en: "Sheet" },
@@ -104,14 +102,8 @@ const translations = {
   "tiles.notesHit": { fr: "notes r\u00E9ussies", en: "notes hit" },
   "tiles.micHint": { fr: "Micro indisponible", en: "Mic unavailable" },
   "tiles.startHint": { fr: "Appuyez sur 3\u2026 2\u2026 1\u2026 pour commencer", en: "Press 3\u2026 2\u2026 1\u2026 to start" },
-  "tiles.instructions": {
-    fr: "Jouez chaque note quand sa tuile atteint la ligne, et tenez-la tant que la tuile la traverse. Coupez le son pour que le micro n'entende que vous.",
-    en: "Play each note when its tile reaches the line, and hold it while the tile crosses it. Mute the sound so the mic only hears you.",
-  },
 
   // Score library
-  "library.fold": { fr: "Replier", en: "Fold" },
-  "library.unfold": { fr: "Afficher les partitions", en: "Show scores" },
   "library.clearFilters": { fr: "Effacer les filtres", en: "Clear filters" },
   "filter.labels": { fr: "Labels :", en: "Labels:" },
   "filter.or": { fr: "OU", en: "OR" },
@@ -121,8 +113,6 @@ const translations = {
   "sort.label": { fr: "Trier :", en: "Sort:" },
   "sort.title": { fr: "Titre", en: "Title" },
   "sort.difficulty": { fr: "Difficult\u00E9", en: "Difficulty" },
-  "sort.tempo": { fr: "Tempo", en: "Tempo" },
-  "sort.duration": { fr: "Dur\u00E9e", en: "Length" },
 
   // Score labels
   "tag.jazz": { fr: "Jazz", en: "Jazz" },
@@ -132,12 +122,11 @@ const translations = {
   "tag.exercise": { fr: "Exercice", en: "Exercise" },
 
   // Difficulty
-  "difficulty.label": { fr: "Difficult\u00E9", en: "Difficulty" },
+  "difficulty.change": { fr: "Changer la difficult\u00E9", en: "Change the difficulty" },
   "difficulty.easy": { fr: "Facile", en: "Easy" },
   "difficulty.medium": { fr: "Moyen", en: "Medium" },
   "difficulty.hard": { fr: "Difficile", en: "Hard" },
   "difficulty.impossible": { fr: "Impossible", en: "Impossible" },
-  "difficulty.reset": { fr: "Revenir \u00E0 la difficult\u00E9 par d\u00E9faut", en: "Reset to default difficulty" },
 
   // Notes
   "note.singular": { fr: "note", en: "note" },

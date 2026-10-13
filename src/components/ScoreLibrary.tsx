@@ -6,8 +6,8 @@ import { effectiveDifficulty } from "@/lib/score-prefs";
 import { useI18n } from "@/lib/i18n";
 import { DifficultyBadge, DIFFICULTY_STYLE, TAG_STYLE, TagPill } from "./ScoreBadges";
 
-type SortKey = "title" | "difficulty" | "tempo" | "duration";
-const SORT_KEYS: SortKey[] = ["title", "difficulty", "tempo", "duration"];
+type SortKey = "title" | "difficulty";
+const SORT_KEYS: SortKey[] = ["title", "difficulty"];
 
 const normalize = (s: string) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -25,8 +25,7 @@ interface ScoreLibraryProps {
   selectedId: string | null;
   onSelect: (score: Score) => void;
   overrides: Record<string, Difficulty>;
-  folded: boolean;
-  onFoldedChange: (folded: boolean) => void;
+  onDifficultyChange: (score: Score, difficulty: Difficulty) => void;
 }
 
 export default function ScoreLibrary({
@@ -34,8 +33,7 @@ export default function ScoreLibrary({
   selectedId,
   onSelect,
   overrides,
-  folded,
-  onFoldedChange,
+  onDifficultyChange,
 }: ScoreLibraryProps) {
   const { t } = useI18n();
   const [search, setSearch] = useState("");
@@ -60,8 +58,6 @@ export default function ScoreLibrary({
       switch (sort.key) {
         case "title": return normalize(s.title);
         case "difficulty": return DIFFICULTIES.indexOf(effectiveDifficulty(s, overrides));
-        case "tempo": return s.tempo;
-        case "duration": return scoreDuration(s);
       }
     };
     return filtered.sort((a, b) => {
@@ -72,40 +68,18 @@ export default function ScoreLibrary({
     });
   }, [scores, search, tags, tagMode, levels, sort, overrides]);
 
-  if (folded) {
-    return (
-      <aside className="lg:w-14 shrink-0">
-        <button
-          onClick={() => onFoldedChange(false)}
-          title={t("library.unfold")}
-          className="nb-btn bg-sun w-full lg:h-52 lg:flex-col px-3 py-2"
-        >
-          <span className="text-lg leading-none">»</span>
-          <span className="nb-label lg:[writing-mode:vertical-rl]">{t("scores.title")}</span>
-        </button>
-      </aside>
-    );
-  }
-
   const inactiveChip = "bg-card";
 
   return (
-    <aside className="nb-card lg:w-80 shrink-0 flex flex-col lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] overflow-hidden">
+    <aside className="nb-card flex flex-col overflow-hidden lg:flex-1 lg:min-h-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-sun border-b-2 border-ink">
+      <div className="px-4 py-3 bg-sun border-b-2 border-ink">
         <h2 className="nb-label text-sm">
           {t("scores.title")}
           <span className="ml-2 font-mono font-bold normal-case tracking-normal">
             {visible.length}/{scores.length}
           </span>
         </h2>
-        <button
-          onClick={() => onFoldedChange(true)}
-          title={t("library.fold")}
-          className="nb-btn bg-card w-8 h-8 text-lg leading-none"
-        >
-          «
-        </button>
       </div>
 
       {/* Search, filters, sort */}
@@ -189,23 +163,27 @@ export default function ScoreLibrary({
       </div>
 
       {/* List */}
-      <ul className="flex-1 overflow-y-auto p-3 space-y-2.5 max-h-[50vh] lg:max-h-none">
+      <ul className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2.5 max-h-[50vh] lg:max-h-none">
         {visible.map((s) => {
           const selected = s.id === selectedId;
+          const difficulty = effectiveDifficulty(s, overrides);
+          // Card and badge move together on hover/selection (the badge sits on top of the card button)
+          const shift = selected
+            ? "translate-x-0.5 translate-y-0.5"
+            : "group-hover:-translate-x-px group-hover:-translate-y-px";
           return (
-            <li key={s.id}>
+            <li key={s.id} className="relative group">
               <button
                 onClick={() => onSelect(s)}
-                className={`w-full text-left px-3 py-2.5 border-2 border-ink rounded-nb transition-all ${
-                  selected
-                    ? "bg-sun shadow-nb-sm translate-x-0.5 translate-y-0.5"
-                    : "bg-card hover:shadow-nb-sm hover:-translate-x-px hover:-translate-y-px"
+                className={`w-full text-left px-3 py-2.5 border-2 border-ink rounded-nb transition-all ${shift} ${
+                  selected ? "bg-sun shadow-nb-sm" : "bg-card group-hover:shadow-nb-sm"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="text-sm font-bold leading-tight">{s.title}</span>
-                  <span className="shrink-0">
-                    <DifficultyBadge difficulty={effectiveDifficulty(s, overrides)} />
+                  {/* Placeholder keeping room for the clickable badge below */}
+                  <span className="shrink-0 invisible" aria-hidden>
+                    <DifficultyBadge difficulty={difficulty} caret />
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
@@ -218,6 +196,10 @@ export default function ScoreLibrary({
                   </span>
                 </div>
               </button>
+              {/* Not inside the card: a button can't contain another button */}
+              <span className={`absolute top-3 right-3.5 transition-all ${shift}`}>
+                <DifficultyBadge difficulty={difficulty} onChange={(d) => onDifficultyChange(s, d)} />
+              </span>
             </li>
           );
         })}

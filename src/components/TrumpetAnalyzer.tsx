@@ -19,17 +19,15 @@ import {
 import { trimAudio } from "@/lib/audio-trim";
 import { useI18n } from "@/lib/i18n";
 import ChromaticScale from "./ChromaticScale";
-import Staff from "./Staff";
 import History from "./History";
-import ScorePlayer, { ScoreView } from "./PartitionPlayer";
+import ScorePlayer, { ScorePlayerHandle } from "./PartitionPlayer";
+import ScoreViewControls, { DEFAULT_TRANSPOSE_IDX, ScoreView, TRANSPOSE_STEPS } from "./ScoreViewControls";
 import ScoreLibrary from "./ScoreLibrary";
-import { Score } from "@/lib/scores";
+import { Difficulty, Score } from "@/lib/scores";
 import {
   effectiveDifficulty,
   setDifficultyOverride,
-  setLibraryFolded,
   useDifficultyOverrides,
-  useLibraryFolded,
 } from "@/lib/score-prefs";
 import LangSwitch from "./LangSwitch";
 import Metronome from "./Metronome";
@@ -59,7 +57,9 @@ export default function TrumpetAnalyzer({ scores }: { scores: Score[] }) {
   const [micAttempt, setMicAttempt] = useState(0);
   const [recording, setRecording] = useState(false);
   const [currentNote, setCurrentNote] = useState<NoteInfo | null>(null);
-  const [playedNotes, setPlayedNotes] = useState<PlayedNote[]>([]);
+  // Notes detected during the current recording (kept out of state: nothing renders them live)
+  const playedNotesRef = useRef<PlayedNote[]>([]);
+  const recordingActiveRef = useRef(false);
   const [history, setHistory] = useState<Recording[]>([]);
 
   useEffect(() => {
@@ -76,10 +76,29 @@ export default function TrumpetAnalyzer({ scores }: { scores: Score[] }) {
     setHistory(dedup);
   }, []);
   const [selectionId, setSelectionId] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  // Picking the score's own difficulty again just drops the override
+  const changeDifficulty = (score: Score, difficulty: Difficulty) =>
+    setDifficultyOverride(score.id, difficulty === score.difficulty ? null : difficulty);
+
+  // Escape closes the history dialog
+  useEffect(() => {
+    if (!historyOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setHistoryOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [historyOpen]);
   const [selectedScoreId, setSelectedScoreId] = useState<string | null>(null);
+  const selectedScore = scores.find((s) => s.id === selectedScoreId) ?? null;
+  // Score open when the recording started, saved with it
+  const recordingScoreRef = useRef<Score | null>(null);
   const [scoreView, setScoreView] = useState<ScoreView>("sheet");
+  const [transposeIdx, setTransposeIdx] = useState(DEFAULT_TRANSPOSE_IDX);
+  const playerRef = useRef<ScorePlayerHandle>(null);
   const difficultyOverrides = useDifficultyOverrides();
-  const libraryFolded = useLibraryFolded();
   const [playbackTime, setPlaybackTime] = useState<number | null>(null);
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
 
@@ -117,11 +136,9 @@ export default function TrumpetAnalyzer({ scores }: { scores: Score[] }) {
         if (confirmedNoteRef.current && confirmedNoteInfoRef.current && noteStartRef.current > 0) {
           const duration = (now - noteStartRef.current) / 1000;
           if (duration >= MIN_NOTE_DURATION) {
-            const info = confirmedNoteInfoRef.current;
-            setPlayedNotes((prev) => [
-              ...prev,
-              { note: info, timestamp: noteStartRef.current, duration },
-            ]);
+            if (recordingActiveRef.current) {
+              playedNotesRef.current.push({ note: confirmedNoteInfoRef.current, timestamp: noteStartRef.current, duration });
+            }
           }
         }
       };
@@ -250,13 +267,15 @@ export default function TrumpetAnalyzer({ scores }: { scores: Score[] }) {
     if (!streamRef.current) return;
 
     chunksRef.current = [];
-    setPlayedNotes([]);
+    playedNotesRef.current = [];
+    recordingActiveRef.current = true;
     startRef.current = Date.now();
     recordingSavedRef.current = false;
     candidateRef.current = null;
     candidateCountRef.current = 0;
     confirmedNoteRef.current = null;
     confirmedNoteInfoRef.current = null;
+    recordingScoreRef.current = selectedScore;
 
     const mediaRecorder = new MediaRecorder(streamRef.current);
     mediaRecorder.ondataavailable = (e) => {
@@ -265,7 +284,7 @@ export default function TrumpetAnalyzer({ scores }: { scores: Score[] }) {
     mediaRecorderRef.current = mediaRecorder;
     mediaRecorder.start();
     setRecording(true);
-  }, []);
+  }, [selectedScore]);
 
   const stopRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
@@ -286,34 +305,43 @@ export default function TrumpetAnalyzer({ scores }: { scores: Score[] }) {
         setAudioUrls((prev) => ({ ...prev, [id]: audioUrl }));
       });
 
-      setPlayedNotes((prevNotes) => {
-        const notes = prevNotes.map((n) => ({
-          ...n,
-          relativeTime: (n.timestamp - start) / 1000,
-        }));
+      const notes = playedNotesRef.current.map((n) => ({
+        ...n,
+        relativeTime: (n.timestamp - start) / 1000,
+      }));
+      playedNotesRef.current = [];
 
-        const locale = langRef.current === "en" ? "en-US" : "fr-FR";
-        const newRecording: Recording = {
-          id,
-          date: new Date(now).toLocaleString(locale),
-          duration,
-          notes,
-          summary: computeSummary(notes),
-        };
+      const locale = langRef.current === "en" ? "en-US" : "fr-FR";
+      // The score open at the start, or else one opened during the recording
+      const score = recordingScoreRef.current ?? selectedScore;
+      const newRecording: Recording = {
+        id,
+        date: new Date(now).toLocaleString(locale),
+        duration,
+        notes,
+        summary: computeSummary(notes),
+        ...(score && { score: { id: score.id, title: score.title } }),
+      };
 
-        setHistory((prev) => {
-          if (prev.some((e) => e.id === id)) return prev;
-          const updated = [newRecording, ...prev];
-          saveHistory(updated);
-          return updated;
-        });
-
-        return [];
+      setHistory((prev) => {
+        if (prev.some((e) => e.id === id)) return prev;
+        const updated = [newRecording, ...prev];
+        saveHistory(updated);
+        return updated;
       });
     };
 
+    recordingActiveRef.current = false;
     recorder.stop();
     setRecording(false);
+  }, [selectedScore]);
+
+  const renameRecording = useCallback((id: string, title: string) => {
+    setHistory((prev) => {
+      const updated = prev.map((e) => (e.id === id ? { ...e, title: title.trim() || undefined } : e));
+      saveHistory(updated);
+      return updated;
+    });
   }, []);
 
   const deleteRecording = useCallback(
@@ -421,27 +449,12 @@ export default function TrumpetAnalyzer({ scores }: { scores: Score[] }) {
   })();
 
   const micReady = micState === "ready";
-  const selectedScore = scores.find((s) => s.id === selectedScoreId) ?? null;
 
   return (
-    <div className="min-h-screen text-ink">
-      {/* Bottom padding keeps content scrollable past the floating metronome */}
-      <div className="max-w-7xl mx-auto px-4 pt-6 pb-28">
-        {/* Header */}
-        <header className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="shrink-0 w-12 h-12 grid place-items-center bg-sun border-2 border-ink rounded-nb shadow-nb text-2xl -rotate-3">
-              🎺
-            </div>
-            <div className="min-w-0">
-              <h1 className="font-display text-2xl sm:text-3xl leading-none">{t("app.title")}</h1>
-              <p className="text-sm font-medium text-ink/60 mt-1">{t("app.subtitle")}</p>
-            </div>
-          </div>
-          <div className="shrink-0">
-            <LangSwitch />
-          </div>
-        </header>
+    // On large screens the dashboard fills the window without scrolling: only the score list and the sheet scroll inside
+    <div className="min-h-screen lg:h-dvh lg:min-h-0 flex flex-col text-ink">
+      <div className="w-full max-w-7xl mx-auto px-4 py-6 flex-1 lg:min-h-0 flex flex-col">
+        <h1 className="sr-only">{t("app.title")}</h1>
 
         {micState === "error" && (
           <div className="nb-card bg-tomato px-4 py-3 mb-5 flex items-center justify-between gap-4 font-semibold">
@@ -463,88 +476,119 @@ export default function TrumpetAnalyzer({ scores }: { scores: Score[] }) {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
-          <ScoreLibrary
-            scores={scores}
-            selectedId={selectedScoreId}
-            onSelect={(score) => setSelectedScoreId(score.id)}
-            overrides={difficultyOverrides}
-            folded={libraryFolded}
-            onFoldedChange={setLibraryFolded}
-          />
-
-          <main className="flex-1 min-w-0 space-y-5">
-            {/* Mic status + recording */}
-            <div className="flex items-center justify-between gap-4">
-              <span
-                className={`inline-flex items-center gap-2 px-3 py-1 text-xs font-bold border-2 border-ink rounded-full shadow-nb-sm ${
-                  micReady ? "bg-mint" : micState === "error" ? "bg-tomato" : "bg-card"
-                }`}
-              >
-                <span
-                  className={`w-2 h-2 rounded-full bg-ink ${micReady ? "animate-pulse" : "opacity-40"}`}
-                />
-                {micReady ? t("mic.listening") : micState === "error" ? t("tiles.micHint") : t("mic.starting")}
-              </span>
-              {!recording ? (
-                <button
-                  onClick={startRecording}
-                  disabled={!micReady}
-                  className="nb-btn bg-tomato px-4 py-2 text-sm"
-                >
-                  <span className="w-3 h-3 rounded-full bg-ink" />
-                  {t("rec.start")}
+        <div className="flex flex-col lg:flex-row gap-6 lg:flex-1 lg:min-h-0">
+          {/* Left column: controls above the score list, so the right column starts at the top */}
+          <div className="lg:w-80 shrink-0 flex flex-col gap-5 lg:min-h-0">
+            {/* Toolbar: metronome, display options, history, recording */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Metronome />
+              <LangSwitch />
+              <ScoreViewControls
+                view={scoreView}
+                onViewChange={setScoreView}
+                transposeIdx={transposeIdx}
+                onTransposeChange={(i) => {
+                  // The notes change: stop what is playing
+                  playerRef.current?.stop();
+                  setTransposeIdx(i);
+                }}
+              />
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button onClick={() => setHistoryOpen(true)} className="nb-btn bg-card px-3.5 py-2 text-sm">
+                  🕘 {t("history.button")}
+                  {history.length > 0 && (
+                    <span className="font-mono text-xs bg-sky border-2 border-ink rounded-full px-1.5 leading-tight">
+                      {history.length}
+                    </span>
+                  )}
                 </button>
-              ) : (
-                <button onClick={stopRecording} className="nb-btn bg-ink text-card px-4 py-2 text-sm">
-                  <span className="w-3 h-3 rounded-sm bg-tomato animate-pulse" />
-                  {t("rec.stop")}
-                </button>
-              )}
+                {!recording ? (
+                  <button
+                    onClick={startRecording}
+                    disabled={!micReady}
+                    className="nb-btn bg-tomato px-4 py-2 text-sm"
+                  >
+                    <span className="w-3 h-3 rounded-full bg-ink" />
+                    {t("rec.start")}
+                  </button>
+                ) : (
+                  <button onClick={stopRecording} className="nb-btn bg-ink text-card px-4 py-2 text-sm">
+                    <span className="w-3 h-3 rounded-sm bg-tomato animate-pulse" />
+                    {t("rec.stop")}
+                  </button>
+                )}
+              </div>
             </div>
 
-            <ChromaticScale currentNote={currentNote} />
+            <ScoreLibrary
+              scores={scores}
+              selectedId={selectedScoreId}
+              onSelect={(score) => setSelectedScoreId(score.id)}
+              overrides={difficultyOverrides}
+              onDifficultyChange={changeDifficulty}
+            />
+          </div>
 
-            {/* Live staff during recording */}
-            {recording && (
-              <Staff
-                notes={playedNotes}
-                noteActiveIndex={playedNotes.length > 0 ? playedNotes.length - 1 : null}
-                mode="live"
-              />
-            )}
+          <main className="flex-1 min-w-0 flex flex-col gap-5 lg:min-h-0">
+            <ChromaticScale currentNote={currentNote} />
 
             {/* Selected score */}
             {selectedScore ? (
               <ScorePlayer
                 key={selectedScore.id}
                 score={selectedScore}
+                ref={playerRef}
                 view={scoreView}
-                onViewChange={setScoreView}
+                transpose={TRANSPOSE_STEPS[transposeIdx].semitones}
                 difficulty={effectiveDifficulty(selectedScore, difficultyOverrides)}
-                difficultyOverridden={selectedScore.id in difficultyOverrides}
-                onDifficultyChange={(d) => setDifficultyOverride(selectedScore.id, d)}
+                onDifficultyChange={(d) => changeDifficulty(selectedScore, d)}
                 onClose={() => setSelectedScoreId(null)}
                 micReady={micReady}
                 liveNote={currentNote}
               />
             ) : (
-              <div className="border-2 border-dashed border-ink rounded-nb bg-card/60 px-6 py-12 text-center">
+              <div className="border-2 border-dashed border-ink rounded-nb bg-card/60 px-6 py-12 text-center lg:flex-1 flex flex-col justify-center">
                 <p className="font-display text-lg">🎼</p>
                 <p className="mt-2 font-semibold">{t("scores.empty")}</p>
               </div>
             )}
 
-            {/* History */}
-            <section className="nb-card p-5">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="nb-label">{t("history.title")}</h2>
+          </main>
+        </div>
+      </div>
+      {/* History dialog */}
+      {historyOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-ink/40 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setHistoryOpen(false);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("history.title")}
+            className="nb-card shadow-nb-lg w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden"
+          >
+            <div className="flex justify-between items-center gap-3 px-5 py-3 bg-sky border-b-2 border-ink">
+              <h2 className="nb-label">{t("history.title")}</h2>
+              <div className="flex items-center gap-2">
                 {history.length > 0 && (
                   <button onClick={clearHistory} className="nb-btn bg-card px-2.5 py-1 text-xs">
                     {t("history.clearAll")}
                   </button>
                 )}
+                <button
+                  onClick={() => setHistoryOpen(false)}
+                  title={t("history.close")}
+                  aria-label={t("history.close")}
+                  className="nb-btn bg-card w-8 h-8 text-lg leading-none"
+                >
+                  ×
+                </button>
               </div>
+            </div>
+            <div className="p-5 overflow-y-auto">
               <History
                 recordings={history}
                 audioUrls={audioUrls}
@@ -553,16 +597,16 @@ export default function TrumpetAnalyzer({ scores }: { scores: Score[] }) {
                   setPlaybackTime(null);
                 }}
                 onDelete={deleteRecording}
+                onRename={renameRecording}
                 onTrim={trimRecording}
                 selectionId={selectionId}
                 onPlaybackTime={setPlaybackTime}
                 replayNoteIndex={replayNoteIndex}
               />
-            </section>
-          </main>
+            </div>
+          </section>
         </div>
-      </div>
-      <Metronome />
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { Note, NOTE_TO_SEMITONE } from "./trumpet";
 
 export interface SynthOptions {
   volume?: number; // 0-1, default 0.5
+  from?: number; // start position in seconds, default 0
 }
 
 /** Convert a written Bb trumpet note to concert MIDI number */
@@ -19,20 +20,34 @@ function noteToMidiConcert(note: Note, octave: number): number {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SoundfontInstrument = any;
 
+// One AudioContext shared by all players: the samples are decoded for it, so it is never closed
+let sharedCtx: AudioContext | null = null;
 let cachedInstrument: SoundfontInstrument | null = null;
 let loadingPromise: Promise<SoundfontInstrument> | null = null;
 
-async function loadInstrument(ac: AudioContext): Promise<SoundfontInstrument> {
-  if (cachedInstrument) return cachedInstrument;
-  if (loadingPromise) return loadingPromise;
+function getAudioContext(): AudioContext {
+  if (!sharedCtx || sharedCtx.state === "closed") {
+    sharedCtx = new AudioContext();
+    cachedInstrument = null;
+    loadingPromise = null;
+  }
+  return sharedCtx;
+}
 
-  loadingPromise = import("soundfont-player").then((Soundfont) =>
-    Soundfont.instrument(ac, "/soundfonts/trumpet-mp3.js" as never)
-  );
+/** Call from a click or key handler: browsers only let audio start from a user gesture */
+export function unlockAudio() {
+  const ctx = getAudioContext();
+  if (ctx.state === "suspended") void ctx.resume();
+}
 
-  cachedInstrument = await loadingPromise;
-  loadingPromise = null;
-  return cachedInstrument;
+function loadInstrument(ac: AudioContext): Promise<SoundfontInstrument> {
+  if (cachedInstrument) return Promise.resolve(cachedInstrument);
+  // A failed load is retried on the next call
+  loadingPromise ??= import("soundfont-player")
+    .then((Soundfont) => Soundfont.instrument(ac, "/soundfonts/trumpet-mp3.js" as never))
+    .then((inst) => (cachedInstrument = inst))
+    .finally(() => (loadingPromise = null));
+  return loadingPromise;
 }
 
 export class TrumpetSynth {
@@ -43,15 +58,19 @@ export class TrumpetSynth {
   private noteTimers: ReturnType<typeof setTimeout>[] = [];
   private scheduledNodes: { stop: () => void }[] = [];
   private instrument: SoundfontInstrument | null = null;
+  // Bumped by stop() so a playScore() still waiting on samples doesn't start afterwards
+  private run = 0;
 
-  constructor(ctx?: AudioContext) {
-    this.ctx = ctx ?? new AudioContext();
+  constructor() {
+    this.ctx = getAudioContext();
     this.gainMaster = this.ctx.createGain();
     this.gainMaster.connect(this.ctx.destination);
     // Start loading samples eagerly
-    loadInstrument(this.ctx).then((inst) => {
-      this.instrument = inst;
-    });
+    loadInstrument(this.ctx)
+      .then((inst) => {
+        this.instrument = inst;
+      })
+      .catch(() => {});
   }
 
   get playing() {
@@ -68,11 +87,12 @@ export class TrumpetSynth {
 
   async playScore(score: Score, options?: SynthOptions) {
     this.stop();
+    const run = this.run;
+    this._playing = true;
     if (this.ctx.state === "suspended") await this.ctx.resume();
 
     const volume = options?.volume ?? 0.5;
     this.gainMaster.gain.setValueAtTime(volume, this.ctx.currentTime);
-    this._playing = true;
 
     // Try to load instrument, fall back to oscillators if not ready
     if (!this.instrument) {
@@ -82,15 +102,23 @@ export class TrumpetSynth {
         // SoundFont failed to load — fall back to oscillators
       }
     }
+    if (run !== this.run) return;
 
-    let currentTime = this.ctx.currentTime;
+    const now = this.ctx.currentTime;
+    // Context time at which the score's beat 0 falls (in the past when starting mid-score)
+    let currentTime = now - (options?.from ?? 0);
 
     score.notes.forEach((noteP, index) => {
       const restDuration = beatsToSeconds(noteP.rest ?? 0, score.tempo);
-      const noteDuration = beatsToSeconds(noteP.duration, score.tempo);
+      const fullDuration = beatsToSeconds(noteP.duration, score.tempo);
 
       currentTime += restDuration;
-      const start = currentTime;
+      const noteStart = currentTime;
+      currentTime = noteStart + fullDuration;
+      // Skip notes already over; a note cut by the start position plays its remaining part
+      if (currentTime <= now) return;
+      const start = Math.max(noteStart, now);
+      const noteDuration = currentTime - start;
 
       if (this.instrument) {
         const midi = noteToMidiConcert(noteP.note, noteP.octave);
@@ -110,15 +138,11 @@ export class TrumpetSynth {
       }
 
       // Notify note change callback
-      const delayMs = (start - this.ctx.currentTime) * 1000;
-      if (delayMs >= 0) {
-        const timer = setTimeout(() => {
-          if (this._playing) this.onNoteChange?.(index);
-        }, delayMs);
-        this.noteTimers.push(timer);
-      }
-
-      currentTime = start + noteDuration;
+      const delayMs = Math.max(0, (start - this.ctx.currentTime) * 1000);
+      const timer = setTimeout(() => {
+        if (this._playing) this.onNoteChange?.(index);
+      }, delayMs);
+      this.noteTimers.push(timer);
     });
 
     const totalDuration = currentTime - this.ctx.currentTime;
@@ -168,6 +192,7 @@ export class TrumpetSynth {
   }
 
   stop() {
+    this.run++;
     this._playing = false;
     for (const node of this.scheduledNodes) {
       try { node.stop(); } catch {}
@@ -179,6 +204,6 @@ export class TrumpetSynth {
 
   dispose() {
     this.stop();
-    if (this.ctx.state !== "closed") this.ctx.close();
+    this.gainMaster.disconnect();
   }
 }

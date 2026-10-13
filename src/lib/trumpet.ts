@@ -206,6 +206,10 @@ export interface Recording {
   duration: number;
   notes: PlayedNote[];
   summary: RecordingSummary;
+  /** Name given by the player */
+  title?: string;
+  /** Score that was open while recording */
+  score?: { id: string; title: string };
 }
 
 export function computeSummary(notes: PlayedNote[]): RecordingSummary {

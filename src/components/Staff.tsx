@@ -274,6 +274,45 @@ function buildScoreMeasures(
   return { measures, ties };
 }
 
+/**
+ * Vertical extent of a drawn row. Text (music-font glyphs and note-name labels) reports the font's
+ * whole line box from getBBox, so it is measured from its anchor point instead.
+ */
+function rowExtent(group: SVGGElement): { top: number; bottom: number } {
+  let top = Infinity;
+  let bottom = -Infinity;
+  const add = (y0: number, y1: number) => {
+    top = Math.min(top, y0);
+    bottom = Math.max(bottom, y1);
+  };
+  group.querySelectorAll<SVGGraphicsElement>("path, rect, line").forEach((el) => {
+    const b = el.getBBox();
+    if (b.width > 0 || b.height > 0) add(b.y, b.y + b.height);
+  });
+  group.querySelectorAll<SVGTextElement>("text").forEach((el) => {
+    const y = Number(el.getAttribute("y"));
+    if (!Number.isFinite(y)) return;
+    // Note-name labels (10pt text, anchored on the baseline)
+    if (el.closest(".vf-annotation")) add(y - 11, y + 4);
+    // Treble clef: anchored on the G line, reaching ~1.5 spaces past the staff on both sides
+    else if (el.closest(".vf-clef")) add(y - 45, y + 27);
+    else if (el.closest(".vf-notehead")) add(y - 6, y + 6);
+    else add(y - 15, y + 15);
+  });
+  return { top, bottom };
+}
+
+/** Scroll the nearest [data-scroll-area] ancestor so the element sits in its upper third, if it is out of view */
+function scrollIntoArea(container: HTMLElement, el: Element) {
+  const area = container.closest<HTMLElement>("[data-scroll-area]");
+  if (!area || area.scrollHeight <= area.clientHeight) return;
+  const a = area.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  const margin = 60;
+  if (r.top >= a.top + margin && r.bottom <= a.bottom - margin) return;
+  area.scrollTo({ top: area.scrollTop + r.top - a.top - a.height / 3, behavior: "smooth" });
+}
+
 /** Build measures for live/replay mode (all quarter notes, 4 per measure) */
 function buildLiveMeasures(
   notes: PlayedNote[],
@@ -340,7 +379,9 @@ function applyNoteStyle(
 // --- Constants ---
 const STAVE_HEIGHT = 180;
 const STAVE_Y = 20;
-const LINE_SPACING = 160; // vertical distance between stave rows
+const LINE_SPACING = 160; // vertical distance between stave rows while drawing, before rows are packed
+const ROW_GAP = 4; // space between the packed rows' actual extents
+const TOP_MARGIN = 6;
 const MEASURE_WIDTH = 180; // minimum width of a measure
 const MEASURE_PADDING = 30; // stave space not available to notes
 const FIRST_MEASURE_PADDING = 80; // extra room for clef + time sig
@@ -360,6 +401,7 @@ interface StaffProps {
 interface StaveRow {
   stave: Stave; // first stave of the row, used for y geometry
   width: number;
+  offset: number; // vertical shift applied when packing rows
 }
 
 export default function Staff({ notes, noteActiveIndex, mode, score, highlight }: StaffProps) {
@@ -381,8 +423,8 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
 
     const line = pitchToLine(hl.note, hl.octave);
     const onLine = Number.isInteger(line);
-    for (const { stave, width } of rowsRef.current) {
-      const y = stave.getYForNote(line);
+    for (const { stave, width, offset } of rowsRef.current) {
+      const y = stave.getYForNote(line) + offset;
       const spacing = stave.getSpacingBetweenLines();
       const band = document.createElementNS(SVG_NS, "rect");
       band.setAttribute("x", "0");
@@ -518,10 +560,22 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
     renderer.resize(svgW, totalHeight);
     const ctx = renderer.getContext();
 
+    // Row of each tie's notes, so ties are drawn with their row (only when both notes share it)
+    const lineOfNote = (vn: StaveNote) => {
+      const mi = measures.findIndex((m) => m.vexNotes.includes(vn));
+      return lines.findIndex((line) => line.includes(mi));
+    };
+    const tieLines = ties.map((tie) => {
+      const from = lineOfNote(tie.from);
+      return from !== -1 && from === lineOfNote(tie.to) ? from : -1;
+    });
+
+    const rowGroups: SVGGElement[] = [];
     lines.forEach((measureIndices, lineIdx) => {
       const y = STAVE_Y + lineIdx * LINE_SPACING;
       let x = 0;
       let rowStave: Stave | null = null;
+      rowGroups.push(ctx.openGroup("staff-row") as SVGGElement);
 
       measureIndices.forEach((mi, localIdx) => {
         const measure = measures[mi];
@@ -555,16 +609,9 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
 
         x += w;
       });
-      if (rowStave) rowsRef.current.push({ stave: rowStave, width: x });
-    });
 
-    // Draw ties (only when both notes are on the same line)
-    for (const tie of ties) {
-      const fromMi = measures.findIndex(m => m.vexNotes.includes(tie.from));
-      const toMi = measures.findIndex(m => m.vexNotes.includes(tie.to));
-      const fromLine = lines.findIndex(line => line.includes(fromMi));
-      const toLine = lines.findIndex(line => line.includes(toMi));
-      if (fromLine === toLine && fromLine !== -1) {
+      ties.forEach((tie, ti) => {
+        if (tieLines[ti] !== lineIdx) return;
         const staveTie = new StaveTie({
           firstNote: tie.from,
           lastNote: tie.to,
@@ -573,8 +620,22 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
         });
         staveTie.setStyle({ fillStyle: NOTE_COLOR, strokeStyle: NOTE_COLOR });
         staveTie.setContext(ctx).draw();
-      }
-    }
+      });
+
+      ctx.closeGroup();
+      if (rowStave) rowsRef.current.push({ stave: rowStave, width: x, offset: 0 });
+    });
+
+    // Pack rows by their drawn extents: rows without ledger notes take much less room than LINE_SPACING
+    let bottom = TOP_MARGIN - ROW_GAP;
+    rowGroups.forEach((group, i) => {
+      const extent = rowExtent(group);
+      const offset = bottom + ROW_GAP - extent.top;
+      group.setAttribute("transform", `translate(0, ${offset})`);
+      if (rowsRef.current[i]) rowsRef.current[i].offset = offset;
+      bottom = extent.bottom + offset;
+    });
+    ctx.resize(svgW, Math.max(bottom + TOP_MARGIN, 60));
 
     // Draw active note halo
     if (noteActiveIndex !== null) {
@@ -597,6 +658,7 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
               halo.setAttribute("fill", ACTIVE_HALO);
               halo.setAttribute("stroke", "none");
               svg.insertBefore(halo, svg.firstChild);
+              scrollIntoArea(container, halo);
             }
             globalIdx++;
           }
@@ -631,15 +693,7 @@ export default function Staff({ notes, noteActiveIndex, mode, score, highlight }
 
   return (
     <div className="bg-card border-2 border-ink rounded-nb overflow-hidden">
-      <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-        <h2 className="nb-label">{t("staff.title")}</h2>
-        {mode === "replay" && noteActiveIndex !== null && (
-          <span className="text-[10px] font-bold bg-sun border-2 border-ink px-1.5 py-px rounded-md">
-            {t("staff.playing")}
-          </span>
-        )}
-      </div>
-      <div ref={wrapperRef} className="px-2 pb-3">
+      <div ref={wrapperRef} className="px-2 py-2">
         <div ref={containerRef} />
       </div>
     </div>

@@ -59,10 +59,3 @@ export function setDifficultyOverride(scoreId: string, difficulty: Difficulty | 
 export function effectiveDifficulty(score: Score, overrides: Record<string, Difficulty>): Difficulty {
   return overrides[score.id] ?? score.difficulty;
 }
-
-// --- Library panel folded or not ---
-
-const libraryFoldedStore = createStoredValue("trumpet-assistant-library-folded", false);
-
-export const useLibraryFolded = libraryFoldedStore.useValue;
-export const setLibraryFolded = libraryFoldedStore.write;

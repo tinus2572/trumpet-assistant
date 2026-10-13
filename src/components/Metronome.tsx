@@ -69,42 +69,40 @@ export default function Metronome() {
   }, []);
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div
+      className={`nb-card shadow-nb-sm px-2.5 py-1.5 flex items-center gap-3 transition-colors ${
+        beat ? "bg-sun" : "bg-card"
+      }`}
+    >
+      {/* Beat indicator */}
       <div
-        className={`nb-card px-3 py-2.5 flex items-center gap-3 transition-colors ${
-          beat ? "bg-sun" : "bg-card"
+        className={`w-3.5 h-3.5 rounded-full border-2 border-ink shrink-0 transition-colors ${
+          beat ? "bg-ink" : "bg-card"
         }`}
-      >
-        {/* Beat indicator */}
-        <div
-          className={`w-3.5 h-3.5 rounded-full border-2 border-ink shrink-0 transition-colors ${
-            beat ? "bg-ink" : "bg-card"
-          }`}
+      />
+
+      {/* BPM slider */}
+      <div className="flex items-center gap-2">
+        <input
+          type="range"
+          min="40"
+          max="220"
+          value={bpm}
+          onChange={(e) => setBpm(Number(e.target.value))}
+          className="nb-range w-24"
         />
-
-        {/* BPM slider */}
-        <div className="flex items-center gap-2">
-          <input
-            type="range"
-            min="40"
-            max="220"
-            value={bpm}
-            onChange={(e) => setBpm(Number(e.target.value))}
-            className="nb-range w-24"
-          />
-          <span className="text-xs font-mono font-bold w-14 text-right tabular-nums">
-            {bpm} <span className="font-normal text-ink/60">bpm</span>
-          </span>
-        </div>
-
-        {/* On/Off button */}
-        <button
-          onClick={playing ? stop : start}
-          className={`nb-btn px-3 py-1.5 text-xs ${playing ? "bg-ink text-card" : "bg-sky"}`}
-        >
-          {playing ? t("metronome.stop") : t("metronome.start")}
-        </button>
+        <span className="text-xs font-mono font-bold w-14 text-right tabular-nums">
+          {bpm} <span className="font-normal text-ink/60">bpm</span>
+        </span>
       </div>
+
+      {/* On/Off button */}
+      <button
+        onClick={playing ? stop : start}
+        className={`nb-btn px-3 py-1.5 text-xs ${playing ? "bg-ink text-card" : "bg-sky"}`}
+      >
+        {playing ? t("metronome.stop") : t("metronome.start")}
+      </button>
     </div>
   );
 }

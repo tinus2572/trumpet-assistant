@@ -105,9 +105,9 @@ export default function ChromaticScale({ currentNote }: ChromaticScaleProps) {
                 }`}
                 style={active ? { backgroundColor: pitchQuality?.color } : undefined}
               />
-              {/* Label */}
+              {/* Label: fixed height so the bigger hover/active label doesn't resize the component */}
               <span
-                className={`text-center leading-none truncate max-w-full ${
+                className={`block h-3 leading-3 text-center truncate max-w-full ${
                   active || hovered
                     ? "font-bold text-[11px]"
                     : n.natural
